@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:scrollbarvis"
         mc:Ignorable="d"
         Title="MainWindow" WindowState="Maximized">
-    <Canvas Name="canv">
+    <Canvas Name="canv" Loaded="canvasloaded">
         <Rectangle Name="bg" Width="2476" Height="6930">
             <Rectangle.Fill>
                 <ImageBrush ImageSource="TaskImage.jpg"></ImageBrush>

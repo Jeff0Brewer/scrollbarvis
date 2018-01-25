@@ -23,6 +23,10 @@ namespace scrollbarvis
         EyeXHost eyeXHost;
         Point track = new Point(0, 0);
 
+        Scrollbar scrollbar;
+
+        String background = "TaskImage.jpg";
+
         public MainWindow()
         {
             InitializeComponent();
@@ -38,6 +42,15 @@ namespace scrollbarvis
             dispatcherTimer.Start();
         }
 
+        private void canvasloaded(object sender, RoutedEventArgs e)
+        {
+            double screenheight = this.ActualHeight - SystemParameters.WindowNonClientFrameThickness.Top - SystemParameters.WindowNonClientFrameThickness.Bottom;
+            SolidColorBrush blankbg = new SolidColorBrush(Colors.LightGray);
+            SolidColorBrush handle = new SolidColorBrush(Colors.Gray);
+
+            scrollbar = new Scrollbar(15,50,screenheight,bg,blankbg,handle,canv,1);
+        }
+
         private void newGazePoint(object s, EyeXFramework.GazePointEventArgs e)
         {
             track.X = e.X;
@@ -47,6 +60,87 @@ namespace scrollbarvis
         private void update(object sender, EventArgs e)
         {
             Point currentGaze = PointFromScreen(track);
+        }
+
+        public class Scrollbar {
+            private Rectangle handle, blankbg, picturebg, hover, bg;
+            private double inwidth, outwidth, scrheight;
+            private int z;
+
+            public Scrollbar(double collapsedwidth, double expandedwidth, double screenheight, 
+                             Rectangle background, SolidColorBrush blank, SolidColorBrush hand, Canvas canv, int zindex) {
+                inwidth = collapsedwidth;
+                outwidth = expandedwidth;
+                scrheight = screenheight;
+                bg = background;
+                z = zindex;
+
+                handle = new Rectangle();
+                handle.Width = inwidth;
+                handle.Height = scrheight/bg.Height*scrheight;
+                Canvas.SetRight(handle, 0);
+                Canvas.SetTop(handle, 0);
+                Panel.SetZIndex(handle, z + 3);
+                handle.Fill = hand;
+                handle.IsHitTestVisible = false;
+                canv.Children.Add(handle);
+
+                blankbg = new Rectangle();
+                blankbg.Width = inwidth;
+                blankbg.Height = scrheight;
+                Canvas.SetRight(blankbg, 0);
+                Canvas.SetTop(blankbg, 0);
+                Panel.SetZIndex(blankbg, z + 2);
+                blankbg.Fill = blank;
+                blankbg.PreviewMouseDown += mousedown;
+                canv.Children.Add(blankbg);
+
+                picturebg = new Rectangle();
+                picturebg.Width = inwidth;
+                picturebg.Height = scrheight;
+                Canvas.SetRight(picturebg, 0);
+                Canvas.SetTop(picturebg, 0);
+                Panel.SetZIndex(picturebg, z + 1);
+                picturebg.Fill = background.Fill;
+                canv.Children.Add(picturebg);
+
+                hover = new Rectangle();
+                hover.Width = 3000;
+                hover.Height = 3000;
+                Panel.SetZIndex(hover, z);
+                hover.Fill = blank;
+                hover.Opacity = 0;
+                hover.PreviewMouseMove += mousemove;
+                hover.PreviewMouseUp += mouseup;
+                hover.PreviewMouseWheel += mousescroll;
+                canv.Children.Add(hover);
+            }
+
+            private void mousedown(object sender, MouseButtonEventArgs e) {
+                Panel.SetZIndex(hover, z + 4);
+            }
+
+            private void mousemove(object sender, MouseEventArgs e) {
+                if (Panel.GetZIndex(hover) == z + 4) {
+                    double handley = e.GetPosition(hover).Y - handle.Height/2;
+                    handley = handley > 0 ? handley : 0;
+                    handley = handley + handle.Height < scrheight ? handley : scrheight - handle.Height;
+                    Canvas.SetTop(handle, handley);
+                    Canvas.SetTop(bg, -handley * (bg.Height / scrheight));
+                }
+            }
+
+            private void mouseup(object sender, MouseEventArgs e) {
+                Panel.SetZIndex(hover, z);
+            }
+
+            private void mousescroll(object sender, MouseWheelEventArgs e) {
+                double handley = Canvas.GetTop(handle) - e.Delta / (.001*bg.Height);
+                handley = handley > 0 ? handley : 0;
+                handley = handley + handle.Height < scrheight ? handley : scrheight - handle.Height;
+                Canvas.SetTop(handle, handley);
+                Canvas.SetTop(bg, -handley * (bg.Height / scrheight));
+            }
         }
     }
 }
