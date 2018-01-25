@@ -30,25 +30,25 @@ namespace scrollbarvis
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void canvasloaded(object sender, RoutedEventArgs e)
+        {
+            double screenheight = this.ActualHeight - SystemParameters.WindowNonClientFrameThickness.Top - SystemParameters.WindowNonClientFrameThickness.Bottom;
+            double screenwidth = this.ActualWidth - SystemParameters.WindowNonClientFrameThickness.Left - SystemParameters.WindowNonClientFrameThickness.Right;
+            SolidColorBrush blankbg = new SolidColorBrush(Colors.LightGray);
+            SolidColorBrush handle = new SolidColorBrush(Colors.Gray);
+            scrollbar = new Scrollbar(15,150,screenheight,screenwidth,0.9,bg,blankbg,handle,canv,1);
 
             eyeXHost = new EyeXHost();
             eyeXHost.Start();
-            var gazeData = eyeXHost.CreateGazePointDataStream(GazePointDataMode.Unfiltered);
+            var gazeData = eyeXHost.CreateGazePointDataStream(GazePointDataMode.LightlyFiltered);
             gazeData.Next += newGazePoint;
 
             System.Windows.Threading.DispatcherTimer dispatcherTimer = new System.Windows.Threading.DispatcherTimer(System.Windows.Threading.DispatcherPriority.Render);
             dispatcherTimer.Tick += new EventHandler(update);
             dispatcherTimer.Interval = new TimeSpan(0, 0, 0, 0, 10);
             dispatcherTimer.Start();
-        }
-
-        private void canvasloaded(object sender, RoutedEventArgs e)
-        {
-            double screenheight = this.ActualHeight - SystemParameters.WindowNonClientFrameThickness.Top - SystemParameters.WindowNonClientFrameThickness.Bottom;
-            SolidColorBrush blankbg = new SolidColorBrush(Colors.LightGray);
-            SolidColorBrush handle = new SolidColorBrush(Colors.Gray);
-
-            scrollbar = new Scrollbar(15,50,screenheight,bg,blankbg,handle,canv,1);
         }
 
         private void newGazePoint(object s, EyeXFramework.GazePointEventArgs e)
@@ -60,20 +60,31 @@ namespace scrollbarvis
         private void update(object sender, EventArgs e)
         {
             Point currentGaze = PointFromScreen(track);
+
+            scrollbar.checkGaze(currentGaze);
+            if (scrollbar.needsupdate)
+                scrollbar.update();
         }
 
         public class Scrollbar {
             private Rectangle handle, blankbg, picturebg, hover, bg;
-            private double inwidth, outwidth, scrheight;
+            private double inwidth, outwidth, currwidth, scrheight, scrwidth, smooth;
             private int z;
+            private int gazetimer;
+            public bool needsupdate;
 
-            public Scrollbar(double collapsedwidth, double expandedwidth, double screenheight, 
+            public Scrollbar(double collapsedwidth, double expandedwidth, double screenheight, double screenwidth, double smoothness,
                              Rectangle background, SolidColorBrush blank, SolidColorBrush hand, Canvas canv, int zindex) {
                 inwidth = collapsedwidth;
                 outwidth = expandedwidth;
+                currwidth = inwidth;
                 scrheight = screenheight;
+                scrwidth = screenwidth;
+                smooth = smoothness;
                 bg = background;
                 z = zindex;
+                gazetimer = 0;
+                needsupdate = false;
 
                 handle = new Rectangle();
                 handle.Width = inwidth;
@@ -116,10 +127,36 @@ namespace scrollbarvis
                 canv.Children.Add(hover);
             }
 
+            public void checkGaze(Point p) {
+                gazetimer--;
+                if (scrwidth - p.X < inwidth*2 || gazetimer > 0 && scrwidth - p.X < outwidth*2)
+                    gazetimer = 100;
+                needsupdate = needsupdate || gazetimer > 0;
+            }
+
+            public void update() {
+                if (gazetimer > 0){
+                    currwidth = currwidth * smooth + outwidth * (1 - smooth);
+                }
+                else if (currwidth - inwidth < .01){
+                    currwidth = inwidth;
+                    needsupdate = false;
+                }
+                else {
+                    currwidth = currwidth * smooth + inwidth * (1 - smooth);
+                }
+                handle.Width = currwidth;
+                blankbg.Width = currwidth;
+                picturebg.Width = currwidth;
+
+                double inpercentage = (outwidth - currwidth) / (outwidth - inwidth);
+                blankbg.Opacity = inpercentage;
+                handle.Opacity = inpercentage + .25;
+            }
+
             private void mousedown(object sender, MouseButtonEventArgs e) {
                 Panel.SetZIndex(hover, z + 4);
             }
-
             private void mousemove(object sender, MouseEventArgs e) {
                 if (Panel.GetZIndex(hover) == z + 4) {
                     double handley = e.GetPosition(hover).Y - handle.Height/2;
@@ -129,7 +166,6 @@ namespace scrollbarvis
                     Canvas.SetTop(bg, -handley * (bg.Height / scrheight));
                 }
             }
-
             private void mouseup(object sender, MouseEventArgs e) {
                 Panel.SetZIndex(hover, z);
             }

@@ -7,9 +7,9 @@
         mc:Ignorable="d"
         Title="MainWindow" WindowState="Maximized">
     <Canvas Name="canv" Loaded="canvasloaded">
-        <Rectangle Name="bg" Width="2476" Height="6930">
+        <Rectangle Name="bg" Width="1501" Height="4330">
             <Rectangle.Fill>
-                <ImageBrush ImageSource="TaskImage.jpg"></ImageBrush>
+                <ImageBrush Stretch="Fill" ImageSource="TaskImage.jpg"></ImageBrush>
             </Rectangle.Fill>
         </Rectangle>
     </Canvas>
