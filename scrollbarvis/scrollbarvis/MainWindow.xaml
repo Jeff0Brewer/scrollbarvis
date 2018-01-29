@@ -12,5 +12,6 @@
                 <ImageBrush Stretch="Fill" ImageSource="TaskImage.jpg"></ImageBrush>
             </Rectangle.Fill>
         </Rectangle>
+        <Image Name="heatmap" Width="1501" Height="4330" Visibility="Hidden"></Image>
     </Canvas>
 </Window>

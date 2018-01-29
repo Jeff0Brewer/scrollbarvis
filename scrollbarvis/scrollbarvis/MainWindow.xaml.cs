@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,6 +23,9 @@ namespace scrollbarvis
     {
         EyeXHost eyeXHost;
         Point track = new Point(0, 0);
+        List<int> xCoord, yCoord;
+        int numCoords = 0;
+        WriteableBitmap wb;
 
         Scrollbar scrollbar;
 
@@ -38,7 +42,10 @@ namespace scrollbarvis
             double screenwidth = this.ActualWidth - SystemParameters.WindowNonClientFrameThickness.Left - SystemParameters.WindowNonClientFrameThickness.Right;
             SolidColorBrush blankbg = new SolidColorBrush(Colors.LightGray);
             SolidColorBrush handle = new SolidColorBrush(Colors.Gray);
-            scrollbar = new Scrollbar(15,150,screenheight,screenwidth,0.9,bg,blankbg,handle,canv,1);
+
+            byte[,,] pixels = createBitmap();
+
+            scrollbar = new Scrollbar(15,150,screenheight,screenwidth,0.9,bg,blankbg,handle,canv,1,wb,heatmap,pixels);
 
             eyeXHost = new EyeXHost();
             eyeXHost.Start();
@@ -73,8 +80,16 @@ namespace scrollbarvis
             private int gazetimer;
             public bool needsupdate;
 
+            /* Heatmap */
+            WriteableBitmap wb;
+            Image heatmap;
+            byte[,,] pixels;
+            bool heatmapEnabled = false; /* Enable or Disable Heatmap!*/
+            double bgTopPosition = 0;
+
             public Scrollbar(double collapsedwidth, double expandedwidth, double screenheight, double screenwidth, double smoothness,
-                             Rectangle background, SolidColorBrush blank, SolidColorBrush hand, Canvas canv, int zindex) {
+                             Rectangle background, SolidColorBrush blank, SolidColorBrush hand, Canvas canv, int zindex, 
+                             WriteableBitmap writeableBitmap, Image heatmapImage,byte[,,]heatmapPixels) {
                 inwidth = collapsedwidth;
                 outwidth = expandedwidth;
                 currwidth = inwidth;
@@ -125,6 +140,12 @@ namespace scrollbarvis
                 hover.PreviewMouseUp += mouseup;
                 hover.PreviewMouseWheel += mousescroll;
                 canv.Children.Add(hover);
+
+                /* Heatmap */
+                wb = writeableBitmap;
+                heatmap = heatmapImage;
+                pixels = heatmapPixels;
+                
             }
 
             public void checkGaze(Point p) {
@@ -156,6 +177,7 @@ namespace scrollbarvis
 
             private void mousedown(object sender, MouseButtonEventArgs e) {
                 Panel.SetZIndex(hover, z + 4);
+                heatmap.Visibility = Visibility.Hidden;
             }
             private void mousemove(object sender, MouseEventArgs e) {
                 if (Panel.GetZIndex(hover) == z + 4) {
@@ -163,11 +185,22 @@ namespace scrollbarvis
                     handley = handley > 0 ? handley : 0;
                     handley = handley + handle.Height < scrheight ? handley : scrheight - handle.Height;
                     Canvas.SetTop(handle, handley);
-                    Canvas.SetTop(bg, -handley * (bg.Height / scrheight));
+                    bgTopPosition = -handley * (bg.Height / scrheight);
+                    Canvas.SetTop(bg, bgTopPosition);
+                } else
+                {
+                    heatmap.Visibility = Visibility.Hidden;
                 }
             }
             private void mouseup(object sender, MouseEventArgs e) {
                 Panel.SetZIndex(hover, z);
+                /* Set Heatmap */
+                double y = e.GetPosition(hover).Y - handle.Height / 2;
+                if (heatmapEnabled)
+                {
+                    y = -1*bgTopPosition;
+                    setBitmap((int)(y < 0 ? 0 : y), pixels);
+                }
             }
 
             private void mousescroll(object sender, MouseWheelEventArgs e) {
@@ -175,8 +208,120 @@ namespace scrollbarvis
                 handley = handley > 0 ? handley : 0;
                 handley = handley + handle.Height < scrheight ? handley : scrheight - handle.Height;
                 Canvas.SetTop(handle, handley);
-                Canvas.SetTop(bg, -handley * (bg.Height / scrheight));
+                bgTopPosition = -handley * (bg.Height / scrheight);
+                Canvas.SetTop(bg, bgTopPosition);
+            }
+
+            /*
+            * Set bitmap for the portion of screen starting at Y position screenPositionTop
+            */
+            private void setBitmap(int screenPositionTop, byte[,,] px)
+            {
+                int height = 3000;
+                int width = (int)bg.Width;
+                // Copy the data into a one-dimensional array.
+                byte[] pixels1d = new byte[height * width * 4];
+                int index = 0;
+                for (int row = screenPositionTop; row < height; row++)
+                {
+                    for (int col = 0; col < width; col++)
+                    {
+                        for (int i = 0; i < 4; i++)
+                            pixels1d[index++] = px[row, col, i];
+                    }
+                }
+                // Update writeable bitmap
+                Int32Rect rect = new Int32Rect(0, 0, width, height);
+                int stride = 4 * width;
+                wb.WritePixels(rect, pixels1d, stride, 0);
+
+                heatmap.Stretch = Stretch.None;
+                heatmap.Margin = new Thickness(0);
+                heatmap.Source = wb;
+                heatmap.Visibility = Visibility.Visible;
             }
         }
+
+
+
+        #region heatmap setup
+        /*
+         * Make a heatmap from existing gaze coordinate data from a previous session. Fill in arrays xCoord and yCoord.
+         */
+        private void makeHeatmap()
+        {
+            // Read in data
+            using (var reader = new StreamReader(@"C:/Users/Master/Documents/GitHub/scrollbarvis/scrollbarvis/scrollbarvis/sample-gaze-data.csv"))
+            {
+                reader.ReadLine(); // Read header line
+                xCoord = new List<int>();
+                yCoord = new List<int>();
+                while (!reader.EndOfStream)
+                {
+                    var line = reader.ReadLine();
+                    var values = line.Split(',');
+
+                    xCoord.Add(int.Parse(values[0]));
+                    yCoord.Add(int.Parse(values[1]));
+                }
+                numCoords = xCoord.Count <= yCoord.Count ? xCoord.Count : yCoord.Count;
+            }
+        }
+
+        /*
+         * Create a bitmap of heatmap pixels. Color based on frequency of gaze coordinates at the pixel, plus color surrounding pixels.
+         */
+        private byte[,,] createBitmap()
+        {
+            int totalWidth = (int)bg.Width;
+            int totalHeight = (int)bg.Height;
+            wb = new WriteableBitmap(totalWidth, totalHeight, 96, 96, PixelFormats.Bgra32, null);
+            byte[,,] pixels = new byte[totalHeight, totalWidth, 4];
+
+            // Clear to red and transparent
+            for (int row = 0; row < totalHeight; row++)
+            {
+                for (int col = 0; col < totalWidth; col++)
+                {
+                    for (int i = 0; i < 4; i++)
+                        if (i==2)
+                        {
+                            pixels[row, col, i] = 255;
+                        } else
+                        {
+                            pixels[row, col, i] = 0;
+                        }
+                }
+            }
+            // Get gaze coordinates, change pixel colors
+            makeHeatmap();
+            for (int i = 0; i < numCoords; i++)
+            {
+                int x = xCoord[i];
+                int y = yCoord[i];
+                double distanceFromCenter, aDifferenceFromMax;
+                int maxDistance = 100;
+                int maxOpacity = 150;
+                double gValue, aValue;
+                for (int j = (x - maxDistance) < 0 ? 0 : (x - maxDistance); j < ((x + maxDistance) > totalWidth ? totalWidth : (x + maxDistance)); j++)
+                {
+                    for (int k = (y - maxDistance) < 0 ? 0 : (y - maxDistance); k < ((y + maxDistance) > totalHeight ? totalHeight : (y + maxDistance)); k++)
+                    {
+                        distanceFromCenter = Math.Sqrt((double)(Math.Pow(x - j,2) + Math.Pow(y - k,2)));
+                        if (distanceFromCenter <= (double)maxDistance)
+                        {
+                            gValue = pixels[j, k, 1];
+                            aDifferenceFromMax = pixels[j, k, 3] / maxOpacity; //closer to 1 = maxed
+                            aValue = (pixels[j, k, 3] + 10 * (1 - (distanceFromCenter / maxDistance)));
+                            aValue = (aValue > maxOpacity ? maxOpacity : aValue);
+                            pixels[j, k, 1] = (byte) (255 * (1 - aValue / maxOpacity)); //Green value
+                            pixels[j, k, 3] = (byte) aValue; //Opacity
+                        }
+                    }
+                }
+            }
+            return pixels;
+        }
+        #endregion
     }
 }
