@@ -89,6 +89,7 @@ namespace scrollbarvis
             byte[,,] pixels;
             bool heatmapEnabled = true; /* Enable or Disable Heatmap!*/
             double bgTopPosition = 0;
+            Button heatmapButton;
 
             public Scrollbar(double collapsedwidth, double expandedwidth, double screenheight, double screenwidth, double smoothness, int duration,
                              Rectangle background, SolidColorBrush blank, SolidColorBrush hand, ImageBrush vertheatmap, Canvas canv, int zindex,
@@ -159,7 +160,27 @@ namespace scrollbarvis
                 wb = writeableBitmap;
                 heatmap = heatmapImage;
                 pixels = heatmapPixels;
+                heatmapButton = new Button();
+                heatmapButton.Height = 40;
+                heatmapButton.Width = 100;
+                heatmapButton.Name = "HeatmapButton";
+                heatmapButton.Content = "Disable heatmap";
+                canv.Children.Add(heatmapButton);
+                Canvas.SetBottom(heatmapButton, 10);
+                Canvas.SetLeft(heatmapButton, 10);
+                Panel.SetZIndex(heatmapButton, 100);
+                heatmapButton.Click += new RoutedEventHandler(HeatmapButton_Click);
+            }
 
+            private void HeatmapButton_Click(object sender, EventArgs e) {
+                heatmapEnabled = !heatmapEnabled;
+                if (heatmapEnabled)
+                {
+                    heatmapButton.Content = "Disable heatmap";
+                } else
+                {
+                    heatmapButton.Content = "Enable heatmap";
+                }
             }
 
             public void checkGaze(Point p) {
@@ -324,7 +345,7 @@ namespace scrollbarvis
         private void makeHeatmap()
         {
             // Read in data
-            using (var reader = new StreamReader(@"C:/Users/ResearchSquad/Documents/GitHub/scrollbarvis/scrollbarvis/scrollbarvis/sample-gaze-data.csv"))
+            using (var reader = new StreamReader(@"C:/Users/Master/Documents/GitHub/scrollbarvis/scrollbarvis/scrollbarvis/sample-gaze-data.csv"))
             {
                 reader.ReadLine(); // Read header line
                 xCoord = new List<int>();
@@ -372,10 +393,9 @@ namespace scrollbarvis
             {
                 int x = xCoord[i];
                 int y = yCoord[i];
-                double distanceFromCenter, aDifferenceFromMax;
+                double distanceFromCenter, distanceRatio, currA, b, r, a;
                 int maxDistance = 100;
                 int maxOpacity = 150;
-                double gValue, aValue;
                 for (int j = (x - maxDistance) < 0 ? 0 : (x - maxDistance); j < ((x + maxDistance) > totalWidth ? totalWidth : (x + maxDistance)); j++)
                 {
                     for (int k = (y - maxDistance) < 0 ? 0 : (y - maxDistance); k < ((y + maxDistance) > totalHeight ? totalHeight : (y + maxDistance)); k++)
@@ -383,12 +403,15 @@ namespace scrollbarvis
                         distanceFromCenter = Math.Sqrt((double)(Math.Pow(x - j,2) + Math.Pow(y - k,2)));
                         if (distanceFromCenter <= (double)maxDistance)
                         {
-                            gValue = pixels[j, k, 1];
-                            aDifferenceFromMax = pixels[j, k, 3] / maxOpacity; //closer to 1 = maxed
-                            aValue = (pixels[j, k, 3] + 10 * (1 - (distanceFromCenter / maxDistance)));
-                            aValue = (aValue > maxOpacity ? maxOpacity : aValue);
-                            pixels[j, k, 1] = (byte) (255 * (1 - aValue / maxOpacity)); //Green value
-                            pixels[j, k, 3] = (byte) aValue; //Opacity
+                            currA = pixels[j, k, 3];
+                            distanceRatio = distanceFromCenter / maxDistance;
+                            a = currA + 10 * (1 - currA/255) * (1 - distanceRatio); // Add less opacity to current value if farther from gaze coordinate
+                            a = (a > maxOpacity ? maxOpacity : a);
+                            b = (255 * (1 - a / maxOpacity)); // Blue = farther from coordinate
+                            r = (255 * (a / maxOpacity)); // Red = closer to coordinate
+                            pixels[j, k, 0] = (byte)b;
+                            pixels[j, k, 2] = (byte)r;
+                            pixels[j, k, 3] = (byte)a;
                         }
                     }
                 }
