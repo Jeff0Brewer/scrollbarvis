@@ -55,9 +55,9 @@ namespace scrollbarvis
             SolidColorBrush blankbg = new SolidColorBrush(Colors.LightGray);
             SolidColorBrush handle = new SolidColorBrush(Colors.Gray);
 
-            //byte[,,] pixels = createBitmap();
-            byte[,,] pixels = new byte[1, 1, 1];
-            makeHeatmap();
+            byte[,,] pixels = createScreenHeatmap();
+            //byte[,,] pixels = new byte[1, 1, 1];
+            //makeHeatmap();
 
             ImageBrush vertheatmap = new ImageBrush(createVerticalHeatmap(150, (int)screenheight, yCoord, numCoords, 4330, 5));
 
@@ -104,7 +104,7 @@ namespace scrollbarvis
             WriteableBitmap wb;
             Image heatmap;
             byte[,,] pixels;
-            bool heatmapEnabled = false; /* Enable or Disable Heatmap!*/
+            bool heatmapEnabled = true; /* Enable or Disable Heatmap!*/
             double bgTopPosition = 0;
             Button heatmapButton;
 
@@ -249,14 +249,17 @@ namespace scrollbarvis
                 }
             }
             private void mouseup(object sender, MouseEventArgs e) {
-                Panel.SetZIndex(hover, z);
-                /* Set Heatmap */
-                double y = e.GetPosition(hover).Y - handle.Height / 2;
-                if (heatmapEnabled)
+                if (Panel.GetZIndex(hover) == z + 5)
                 {
-                    y = -1 * bgTopPosition;
-                    setBitmap((int)(y < 0 ? 0 : y), pixels);
+                    /* Set Heatmap */
+                    double y = e.GetPosition(hover).Y - handle.Height / 2;
+                    if (heatmapEnabled)
+                    {
+                        y = -1 * bgTopPosition;
+                        setBitmap((int)(y < 0 ? 0 : y), pixels);
+                    }
                 }
+                Panel.SetZIndex(hover, z);
             }
 
             private void mousescroll(object sender, MouseWheelEventArgs e) {
@@ -273,17 +276,17 @@ namespace scrollbarvis
             */
             private void setBitmap(int screenPositionTop, byte[,,] px)
             {
-                int height = 3000;
-                int width = (int)bg.Width;
+                int height = (int)scrheight;
+                int width = (int)scrwidth;
                 // Copy the data into a one-dimensional array.
                 byte[] pixels1d = new byte[height * width * 4];
                 int index = 0;
-                for (int row = screenPositionTop; row < height; row++)
+                for (int row = screenPositionTop; row < screenPositionTop+height; row++)
                 {
                     for (int col = 0; col < width; col++)
                     {
                         for (int i = 0; i < 4; i++)
-                            pixels1d[index++] = px[row, col, i];
+                            pixels1d[index++] = px[col, row, i];
                     }
                 }
                 // Update writeable bitmap
@@ -391,12 +394,12 @@ namespace scrollbarvis
         /*
          * Create a bitmap of heatmap pixels. Color based on frequency of gaze coordinates at the pixel, plus color surrounding pixels.
          */
-        private byte[,,] createBitmap()
+        private byte[,,] createScreenHeatmap()
         {
             int totalWidth = (int)bg.Width;
             int totalHeight = (int)bg.Height;
             wb = new WriteableBitmap(totalWidth, totalHeight, 96, 96, PixelFormats.Bgra32, null);
-            byte[,,] pixels = new byte[totalHeight, totalWidth, 4];
+            byte[,,] pixels = new byte[totalWidth, totalHeight, 4];
 
             // Clear to red and transparent
             for (int row = 0; row < totalHeight; row++)
@@ -406,10 +409,10 @@ namespace scrollbarvis
                     for (int i = 0; i < 4; i++)
                         if (i==2)
                         {
-                            pixels[row, col, i] = 255;
+                            pixels[col, row, i] = 255;
                         } else
                         {
-                            pixels[row, col, i] = 0;
+                            pixels[col, row, i] = 0;
                         }
                 }
             }
