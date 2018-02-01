@@ -104,7 +104,7 @@ namespace scrollbarvis
             WriteableBitmap wb;
             Image heatmap;
             byte[,,] pixels;
-            bool heatmapEnabled = true; /* Enable or Disable Heatmap!*/
+            bool heatmapShown = false; /* Show or Hide Heatmap!*/
             double bgTopPosition = 0;
             Button heatmapButton;
 
@@ -181,23 +181,38 @@ namespace scrollbarvis
                 heatmapButton.Height = 40;
                 heatmapButton.Width = 100;
                 heatmapButton.Name = "HeatmapButton";
-                heatmapButton.Content = "Disable heatmap";
+                hideHeatmap();
                 canv.Children.Add(heatmapButton);
-                Canvas.SetBottom(heatmapButton, 10);
-                Canvas.SetLeft(heatmapButton, 10);
+                Canvas.SetTop(heatmapButton, 10);
+                Canvas.SetRight(heatmapButton, outwidth+10);
                 Panel.SetZIndex(heatmapButton, 100);
                 heatmapButton.Click += new RoutedEventHandler(HeatmapButton_Click);
             }
 
             private void HeatmapButton_Click(object sender, EventArgs e) {
-                heatmapEnabled = !heatmapEnabled;
-                if (heatmapEnabled)
+                heatmapShown = !heatmapShown;
+                if (heatmapShown)
                 {
-                    heatmapButton.Content = "Disable heatmap";
+                    showHeatmap();
                 } else
                 {
-                    heatmapButton.Content = "Enable heatmap";
+                    hideHeatmap();
                 }
+            }
+            private void showHeatmap()
+            {
+                double y = -1 * bgTopPosition;
+                setScreenHeatmap((int)(y < 0 ? 0 : y), pixels);
+
+                heatmapShown = true;
+                heatmapButton.Content = "Hide heatmap";
+                heatmap.Visibility = Visibility.Visible;
+            }
+            private void hideHeatmap()
+            {
+                heatmapShown = false;
+                heatmapButton.Content = "Show heatmap";
+                heatmap.Visibility = Visibility.Hidden;
             }
 
             public void checkGaze(Point p) {
@@ -233,7 +248,6 @@ namespace scrollbarvis
 
             private void mousedown(object sender, MouseButtonEventArgs e) {
                 Panel.SetZIndex(hover, z + 5);
-                heatmap.Visibility = Visibility.Hidden;
             }
             private void mousemove(object sender, MouseEventArgs e) {
                 if (Panel.GetZIndex(hover) == z + 5) {
@@ -243,21 +257,13 @@ namespace scrollbarvis
                     Canvas.SetTop(handle, handley);
                     bgTopPosition = -handley * (bg.Height / scrheight);
                     Canvas.SetTop(bg, bgTopPosition);
-                } else
-                {
-                    heatmap.Visibility = Visibility.Hidden;
                 }
             }
             private void mouseup(object sender, MouseEventArgs e) {
                 if (Panel.GetZIndex(hover) == z + 5)
                 {
                     /* Set Heatmap */
-                    double y = e.GetPosition(hover).Y - handle.Height / 2;
-                    if (heatmapEnabled)
-                    {
-                        y = -1 * bgTopPosition;
-                        setBitmap((int)(y < 0 ? 0 : y), pixels);
-                    }
+                    showHeatmap();
                 }
                 Panel.SetZIndex(hover, z);
             }
@@ -269,12 +275,18 @@ namespace scrollbarvis
                 Canvas.SetTop(handle, handley);
                 bgTopPosition = -handley * (bg.Height / scrheight);
                 Canvas.SetTop(bg, bgTopPosition);
+                /* Set Heatmap*/
+                if (heatmapShown)
+                {
+                    double y = -1 * bgTopPosition;
+                    setScreenHeatmap((int)(y < 0 ? 0 : y), pixels);
+                }
             }
 
             /*
             * Set bitmap for the portion of screen starting at Y position screenPositionTop
             */
-            private void setBitmap(int screenPositionTop, byte[,,] px)
+            private void setScreenHeatmap(int screenPositionTop, byte[,,] px)
             {
                 int height = (int)scrheight;
                 int width = (int)scrwidth;
@@ -297,7 +309,7 @@ namespace scrollbarvis
                 heatmap.Stretch = Stretch.None;
                 heatmap.Margin = new Thickness(0);
                 heatmap.Source = wb;
-                heatmap.Visibility = Visibility.Visible;
+                //heatmap.Visibility = Visibility.Visible;
             }
         }
 
@@ -424,7 +436,7 @@ namespace scrollbarvis
                 int y = yCoord[i];
                 double distanceFromCenter, distanceRatio, currA, b, r, a;
                 int maxDistance = 100;
-                int maxOpacity = 150;
+                int maxOpacity = 200;
                 for (int j = (x - maxDistance) < 0 ? 0 : (x - maxDistance); j < ((x + maxDistance) > totalWidth ? totalWidth : (x + maxDistance)); j++)
                 {
                     for (int k = (y - maxDistance) < 0 ? 0 : (y - maxDistance); k < ((y + maxDistance) > totalHeight ? totalHeight : (y + maxDistance)); k++)
@@ -434,7 +446,7 @@ namespace scrollbarvis
                         {
                             currA = pixels[j, k, 3];
                             distanceRatio = distanceFromCenter / maxDistance;
-                            a = currA + 10 * (1 - currA/255) * (1 - distanceRatio); // Add less opacity to current value if farther from gaze coordinate
+                            a = currA + 5 * (1 - currA/255) * (1 - distanceRatio); // Add less opacity to current value if farther from gaze coordinate
                             a = (a > maxOpacity ? maxOpacity : a);
                             b = (255 * (1 - a / maxOpacity)); // Blue = farther from coordinate
                             r = (255 * (a / maxOpacity)); // Red = closer to coordinate
