@@ -87,7 +87,7 @@ namespace scrollbarvis
             WriteableBitmap wb;
             Image heatmap;
             byte[,,] pixels;
-            bool heatmapEnabled = false; /* Enable or Disable Heatmap!*/
+            bool heatmapEnabled = true; /* Enable or Disable Heatmap!*/
             double bgTopPosition = 0;
 
             public Scrollbar(double collapsedwidth, double expandedwidth, double screenheight, double screenwidth, double smoothness, int duration,
@@ -123,6 +123,7 @@ namespace scrollbarvis
                 Panel.SetZIndex(blankbg, z + 3);
                 blankbg.Fill = blank;
                 blankbg.PreviewMouseDown += mousedown;
+                blankbg.PreviewMouseWheel += mousescroll;
                 canv.Children.Add(blankbg);
 
                 heatmapbg = new Rectangle();
@@ -259,13 +260,15 @@ namespace scrollbarvis
             }
         }
 
-        public WriteableBitmap createVerticalHeatmap(int width, int height, List<int> yCoords, int numCoords, int maxY, int spread) {
-            int[] frequencies = new int[maxY];
+        public WriteableBitmap createVerticalHeatmap(int width, int height, List<int> yCoords, int numCoords, double maxY, int spread) {
+            byte[,] colors = new byte[,] { { 255, 0, 0 },
+                                           { 0, 0, 255 }};
+            int[] frequencies = new int[height];
             int maxfrequency = 0;
             for (int i = 0; i < numCoords; i++) {
                 for (int s = -spread; s <= spread; s++) {
-                    int y = yCoords[i] + s;
-                    if(y > 0 && y < height) { 
+                    int y = (int)(height * yCoords[i]/maxY + s);
+                    if(y > 0 && y < frequencies.Length) { 
                         frequencies[y] += spread - Math.Abs(s);
                         maxfrequency = frequencies[y] > maxfrequency ? frequencies[y] : maxfrequency;
                     }
@@ -273,12 +276,20 @@ namespace scrollbarvis
             }
             byte[,,] pixels = new byte[width, height, 4];
             
-            for (int y = 0; y < height; y++) {
+            for (int y = 0; y < frequencies.Length; y++) {
                 byte alpha = (byte)(255 * frequencies[y] / (double)maxfrequency);
+                double color = (colors.GetLength(0) - 1) * frequencies[y] / (double)maxfrequency;
+                byte b, g, r;
+                int colorlow = (int)color;
+                int colorhigh = (int)Math.Ceiling(color);
+                color -= colorlow;
+                b = (byte)(colors[colorlow, 0] * (1 - color) + colors[colorhigh, 0] * color);
+                g = (byte)(colors[colorlow, 1] * (1 - color) + colors[colorhigh, 1] * color);
+                r = (byte)(colors[colorlow, 2] * (1 - color) + colors[colorhigh, 2] * color);
                 for (int x = 0; x < width; x++) {
-                    pixels[x, y, 0] = 0;
-                    pixels[x, y, 1] = 0;
-                    pixels[x, y, 2] = 255;
+                    pixels[x, y, 0] = b;
+                    pixels[x, y, 1] = g;
+                    pixels[x, y, 2] = r;
                     pixels[x, y, 3] = alpha;
                 }
             }

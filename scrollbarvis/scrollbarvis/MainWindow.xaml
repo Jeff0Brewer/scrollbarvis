@@ -13,5 +13,6 @@
             </Rectangle.Fill>
         </Rectangle>
         <Image Name="heatmap" Width="1501" Height="4330" Visibility="Hidden"></Image>
+        <TextBlock Name="test" Canvas.Left="0" Canvas.Top="0" Text="0"></TextBlock>
     </Canvas>
 </Window>
