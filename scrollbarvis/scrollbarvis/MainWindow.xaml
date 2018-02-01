@@ -5,14 +5,15 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:scrollbarvis"
         mc:Ignorable="d"
-        Title="MainWindow" WindowState="Maximized">
+        Title="MainWindow" WindowState="Maximized"
+        Closing="Window_Closing">
     <Canvas Name="canv" Loaded="canvasloaded">
-        <Rectangle Name="bg" Width="1501" Height="4330">
+        <Rectangle Name="bg" Width="1501" Height="4330" Canvas.Top="0">
             <Rectangle.Fill>
                 <ImageBrush Stretch="Fill" ImageSource="TaskImage.jpg"></ImageBrush>
             </Rectangle.Fill>
         </Rectangle>
         <Image Name="heatmap" Width="1501" Height="4330" Visibility="Hidden"></Image>
-        <TextBlock Name="test" Canvas.Left="0" Canvas.Top="0" Text="0"></TextBlock>
+        <TextBlock Name="test" Canvas.Left="0" Canvas.Top="0" Text=""></TextBlock>
     </Canvas>
 </Window>

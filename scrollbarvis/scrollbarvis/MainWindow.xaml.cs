@@ -29,11 +29,23 @@ namespace scrollbarvis
 
         Scrollbar scrollbar;
 
-        String background = "TaskImage.jpg";
+        StringBuilder csv = new StringBuilder();
+        String filePath;
+        String pathStart = "gazerecordings/recording";
+        bool recorded = false;
+
+        String inputFile = "gazerecordings/recording0.csv";
 
         public MainWindow()
         {
             InitializeComponent();
+
+            int offset = 0;
+            filePath = pathStart + offset.ToString() + ".csv";
+            while (File.Exists(filePath)) {
+                offset++;
+                filePath = pathStart + offset.ToString() + ".csv";
+            }
         }
 
         private void canvasloaded(object sender, RoutedEventArgs e)
@@ -43,7 +55,9 @@ namespace scrollbarvis
             SolidColorBrush blankbg = new SolidColorBrush(Colors.LightGray);
             SolidColorBrush handle = new SolidColorBrush(Colors.Gray);
 
-            byte[,,] pixels = createBitmap();
+            //byte[,,] pixels = createBitmap();
+            byte[,,] pixels = new byte[1, 1, 1];
+            makeHeatmap();
 
             ImageBrush vertheatmap = new ImageBrush(createVerticalHeatmap(150, (int)screenheight, yCoord, numCoords, 4330, 5));
 
@@ -69,10 +83,13 @@ namespace scrollbarvis
         private void update(object sender, EventArgs e)
         {
             Point currentGaze = PointFromScreen(track);
+            currentGaze.Y -= Canvas.GetTop(bg);
 
             scrollbar.checkGaze(currentGaze);
             if (scrollbar.needsupdate)
                 scrollbar.update();
+
+            //recordGazePoint(currentGaze);
         }
 
         public class Scrollbar {
@@ -87,7 +104,7 @@ namespace scrollbarvis
             WriteableBitmap wb;
             Image heatmap;
             byte[,,] pixels;
-            bool heatmapEnabled = true; /* Enable or Disable Heatmap!*/
+            bool heatmapEnabled = false; /* Enable or Disable Heatmap!*/
             double bgTopPosition = 0;
             Button heatmapButton;
 
@@ -337,6 +354,15 @@ namespace scrollbarvis
             return flat;
         }
 
+        public void recordGazePoint(Point p) {
+            String line = string.Format("{0},{1}", (int)p.X, (int)p.Y);
+            csv.AppendLine(line);
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e){
+            if(recorded)
+                File.WriteAllText(filePath, csv.ToString());
+        }
 
         #region heatmap setup
         /*
@@ -345,7 +371,7 @@ namespace scrollbarvis
         private void makeHeatmap()
         {
             // Read in data
-            using (var reader = new StreamReader(@"C:/Users/Master/Documents/GitHub/scrollbarvis/scrollbarvis/scrollbarvis/sample-gaze-data.csv"))
+            using (var reader = new StreamReader(inputFile))
             {
                 reader.ReadLine(); // Read header line
                 xCoord = new List<int>();
@@ -354,7 +380,7 @@ namespace scrollbarvis
                 {
                     var line = reader.ReadLine();
                     var values = line.Split(',');
-
+                    
                     xCoord.Add(int.Parse(values[0]));
                     yCoord.Add(int.Parse(values[1]));
                 }
