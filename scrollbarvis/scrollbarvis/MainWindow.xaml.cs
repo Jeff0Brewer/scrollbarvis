@@ -23,7 +23,7 @@ namespace scrollbarvis
     {
         EyeXHost eyeXHost;
         Point track = new Point(0, 0);
-        List<int> xCoord, yCoord;
+        List<int>[] xCoords, yCoords;
         int numCoords = 0;
         WriteableBitmap wb;
 
@@ -34,7 +34,7 @@ namespace scrollbarvis
         String pathStart = "gazerecordings/recording";
         bool recorded = false;
 
-        String inputFile = "gazerecordings/recording0.csv";
+        String[] inputFile = { "gazerecordings/recording0.csv" };
 
         public MainWindow()
         {
@@ -55,11 +55,19 @@ namespace scrollbarvis
             SolidColorBrush blankbg = new SolidColorBrush(Colors.LightGray);
             SolidColorBrush handle = new SolidColorBrush(Colors.Gray);
 
-            byte[,,] pixels = createScreenHeatmap();
-            //byte[,,] pixels = new byte[1, 1, 1];
-            //makeHeatmap();
+            xCoords = new List<int>[inputFile.Length];
+            yCoords = new List<int>[inputFile.Length];
+            List<int>[] points;
+            for (int c = 0; c < inputFile.Length; c++) {
+                points = makeHeatmap(inputFile[c]);
+                xCoords[c] = points[0];
+                yCoords[c] = points[1];
+            }
 
-            ImageBrush vertheatmap = new ImageBrush(createVerticalHeatmap(150, (int)screenheight, yCoord, numCoords, 4330, 5));
+            byte[,] colors = new byte[,] { { 255, 0, 0 } };
+
+            byte[,,] pixels = createScreenHeatmap(xCoords[0], yCoords[0]);
+            ImageBrush vertheatmap = new ImageBrush(createVerticalHeatmap(150, (int)screenheight, yCoords[0], numCoords, 4330, 5, colors));
 
             scrollbar = new Scrollbar(15, 150, screenheight, screenwidth, 0.9, 100, bg, blankbg, handle, vertheatmap, canv, 1, wb, heatmap, pixels);
 
@@ -289,7 +297,7 @@ namespace scrollbarvis
             private void setScreenHeatmap(int screenPositionTop, byte[,,] px)
             {
                 int height = (int)scrheight;
-                int width = (int)scrwidth;
+                int width = (int)1501;
                 // Copy the data into a one-dimensional array.
                 byte[] pixels1d = new byte[height * width * 4];
                 int index = 0;
@@ -313,9 +321,7 @@ namespace scrollbarvis
             }
         }
 
-        public WriteableBitmap createVerticalHeatmap(int width, int height, List<int> yCoords, int numCoords, double maxY, int spread) {
-            byte[,] colors = new byte[,] { { 255, 0, 0 },
-                                           { 0, 0, 255 }};
+        public WriteableBitmap createVerticalHeatmap(int width, int height, List<int> yCoords, int numCoords, double maxY, int spread, byte[,] colors) {
             int[] frequencies = new int[height];
             int maxfrequency = 0;
             for (int i = 0; i < numCoords; i++) {
@@ -383,30 +389,32 @@ namespace scrollbarvis
         /*
          * Make a heatmap from existing gaze coordinate data from a previous session. Fill in arrays xCoord and yCoord.
          */
-        private void makeHeatmap()
+        private List<int>[] makeHeatmap(String input)
         {
+            List<int>[] coords = new List<int>[2];
             // Read in data
-            using (var reader = new StreamReader(inputFile))
+            using (var reader = new StreamReader(input))
             {
                 reader.ReadLine(); // Read header line
-                xCoord = new List<int>();
-                yCoord = new List<int>();
+                coords[0] = new List<int>();
+                coords[1] = new List<int>();
                 while (!reader.EndOfStream)
                 {
                     var line = reader.ReadLine();
                     var values = line.Split(',');
-                    
-                    xCoord.Add(int.Parse(values[0]));
-                    yCoord.Add(int.Parse(values[1]));
+
+                    coords[0].Add(int.Parse(values[0]));
+                    coords[1].Add(int.Parse(values[1]));
                 }
-                numCoords = xCoord.Count <= yCoord.Count ? xCoord.Count : yCoord.Count;
+                numCoords = coords[0].Count <= coords[1].Count ? coords[0].Count : coords[1].Count;
             }
+            return coords;
         }
 
         /*
          * Create a bitmap of heatmap pixels. Color based on frequency of gaze coordinates at the pixel, plus color surrounding pixels.
          */
-        private byte[,,] createScreenHeatmap()
+        private byte[,,] createScreenHeatmap(List<int> xCor, List<int> yCor)
         {
             int totalWidth = (int)bg.Width;
             int totalHeight = (int)bg.Height;
@@ -429,11 +437,10 @@ namespace scrollbarvis
                 }
             }
             // Get gaze coordinates, change pixel colors
-            makeHeatmap();
             for (int i = 0; i < numCoords; i++)
             {
-                int x = xCoord[i];
-                int y = yCoord[i];
+                int x = xCor[i];
+                int y = yCor[i];
                 double distanceFromCenter, distanceRatio, currA, b, r, a;
                 int maxDistance = 100;
                 int maxOpacity = 200;
