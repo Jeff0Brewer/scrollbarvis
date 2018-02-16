@@ -26,6 +26,7 @@ namespace scrollbarvis
         List<int>[] xCoords, yCoords;
         int[] numCoords;
        WriteableBitmap wb;
+        List<byte[,,]> pixels3d;
 
         Scrollbar scrollbar;
 
@@ -34,7 +35,7 @@ namespace scrollbarvis
         String pathStart = "gazerecordings/recording";
         bool recorded = false;
 
-        String[] inputFile = { "gazerecordings/recording0.csv", "gazerecordings/recording1-test.csv" };
+        String[] inputFile = { "gazerecordings/recording0.csv", "gazerecordings/recording1.csv", "gazerecordings/recording2.csv"};
 
         public MainWindow()
         {
@@ -46,6 +47,22 @@ namespace scrollbarvis
                 offset++;
                 filePath = pathStart + offset.ToString() + ".csv";
             }
+
+            xCoords = new List<int>[inputFile.Length];
+            yCoords = new List<int>[inputFile.Length];
+            numCoords = new int[inputFile.Length];
+            List<int>[] points;
+            byte[,,] px;
+            pixels3d = new List<byte[,,]>(inputFile.Length);
+            for (int c = 0; c < inputFile.Length; c++)
+            {
+                points = makeHeatmap(inputFile[c], c);
+                xCoords[c] = points[0];
+                yCoords[c] = points[1];
+                /* Create a heatmap for each file, save to List of byte arrays */
+                px = createScreenHeatmap(xCoords[c], yCoords[c], c);
+                pixels3d.Add(px);
+            }
         }
 
         private void canvasloaded(object sender, RoutedEventArgs e)
@@ -54,21 +71,6 @@ namespace scrollbarvis
             double screenwidth = this.ActualWidth - SystemParameters.WindowNonClientFrameThickness.Left - SystemParameters.WindowNonClientFrameThickness.Right;
             SolidColorBrush blankbg = new SolidColorBrush(Colors.LightGray);
             SolidColorBrush handle = new SolidColorBrush(Colors.Gray);
-
-            xCoords = new List<int>[inputFile.Length];
-            yCoords = new List<int>[inputFile.Length];
-            numCoords = new int[inputFile.Length];
-            List<int>[] points;
-            byte[,,] px;
-            List<byte[,,]> pixels3d = new List<byte[,,]>(inputFile.Length);
-            for (int c = 0; c < inputFile.Length; c++) {
-                points = makeHeatmap(inputFile[c],c);
-                xCoords[c] = points[0];
-                yCoords[c] = points[1];
-                /* Create a heatmap for each file, save to List of byte arrays */
-                px = createScreenHeatmap(xCoords[c], yCoords[c], c);
-                pixels3d.Add(px);
-            }
 
             byte[,] colors = new byte[,] { { 255, 0, 0 } };
 
@@ -117,7 +119,6 @@ namespace scrollbarvis
             WriteableBitmap wb;
             Image heatmap;
             List<byte[,,]> pixels;
-            //bool heatmapShown = false; /* Show or Hide Heatmap!*/
             Button[] heatmapButtons;
             bool[] heatmapShown;
             double bgTopPosition = 0;
@@ -505,28 +506,20 @@ namespace scrollbarvis
         {
             int totalWidth = (int)bg.Width;
             int totalHeight = (int)bg.Height;
+            int x, y;
+            double distanceFromCenter, distanceRatio, currA, b, g, r, a, secondColor;
+            int maxDistance = 130;
+            double maxOpacity = 200;
+            double maxSecondColor = 60;
+            double mainColor = 255;
+
             wb = new WriteableBitmap(totalWidth, totalHeight, 96, 96, PixelFormats.Bgra32, null);
             byte[,,] pixels = new byte[totalWidth, totalHeight, 4];
 
-            // Clear to black and transparent
-            for (int row = 0; row < totalHeight; row++)
-            {
-                for (int col = 0; col < totalWidth; col++)
-                {
-                    for (int i = 0; i < 4; i++)
-                    {
-                        pixels[col, row, i] = 0;
-                    }
-                }
-            }
             // Get gaze coordinates, change pixel colors
             for (int i = 0; i < numCoords[index]; i++)
             {
-                int x = xCor[i];
-                int y = yCor[i];
-                double distanceFromCenter, distanceRatio, currA, b, g, r, a, mainColor, secondColor, maxSecondColor;
-                int maxDistance = 100;
-                int maxOpacity = 200;
+                x = xCor[i]; y = yCor[i];
                 for (int j = (x - maxDistance) < 0 ? 0 : (x - maxDistance); j < ((x + maxDistance) > totalWidth ? totalWidth : (x + maxDistance)); j++)
                 {
                     for (int k = (y - maxDistance) < 0 ? 0 : (y - maxDistance); k < ((y + maxDistance) > totalHeight ? totalHeight : (y + maxDistance)); k++)
@@ -535,12 +528,13 @@ namespace scrollbarvis
                         if (distanceFromCenter <= (double)maxDistance)
                         {
                             currA = pixels[j, k, 3];
-                            distanceRatio = distanceFromCenter / maxDistance;
-                            a = currA + 10 * (1 - currA/255) * (1 - distanceRatio); // Add less opacity to current value if farther from gaze coordinate
+                            // distanceRatio = distanceFromCenter / maxDistance;
+
+                            a = currA + (1 - currA/maxOpacity) * 35 * Math.Pow(0.95, distanceFromCenter); // EXPONENTIAL DECAY
+                            //a = currA + 5 * (1 - currA/255) * (1 - distanceRatio); // Add less opacity to current value if farther from gaze coordinate
                             a = (a > maxOpacity ? maxOpacity : a);
 
-                            maxSecondColor = 60; b = 0; g = 0; r = 0;
-                            mainColor = 255; //(255 * (a / maxOpacity));
+                            mainColor = 255;
                             secondColor = maxSecondColor * Math.Pow((1 - a/maxOpacity),2);
                             secondColor = (secondColor > maxSecondColor) ? maxSecondColor : secondColor;
                             switch (index)
@@ -566,7 +560,7 @@ namespace scrollbarvis
                             pixels[j, k, 2] = (byte)r;
                             pixels[j, k, 3] = (byte)a;
                         }
-                    }
+                    } 
                 }
             }
             return pixels;
