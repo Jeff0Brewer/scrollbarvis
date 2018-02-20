@@ -25,7 +25,7 @@ namespace scrollbarvis
         Point track = new Point(0, 0);
         List<int>[] xCoords, yCoords;
         int[] numCoords;
-       WriteableBitmap wb;
+        WriteableBitmap wb;
         List<byte[,,]> pixels3d;
 
         Scrollbar scrollbar;
@@ -60,8 +60,8 @@ namespace scrollbarvis
                 xCoords[c] = points[0];
                 yCoords[c] = points[1];
                 /* Create a heatmap for each file, save to List of byte arrays */
-                px = createScreenHeatmap(xCoords[c], yCoords[c], c);
-                pixels3d.Add(px);
+                //px = createScreenHeatmap(xCoords[c], yCoords[c], c);
+                //pixels3d.Add(px);
             }
         }
 
@@ -72,11 +72,17 @@ namespace scrollbarvis
             SolidColorBrush blankbg = new SolidColorBrush(Colors.LightGray);
             SolidColorBrush handle = new SolidColorBrush(Colors.Gray);
 
-            byte[,] colors = new byte[,] { { 255, 0, 0 } };
+            List<byte[,]> colors = new List<byte[,]>(3);
+            colors.Add(new byte[,] { { 255, 0, 0 } });
+            colors.Add(new byte[,] { { 0, 255, 0 } });
+            colors.Add(new byte[,] { { 0, 0, 255 } });
 
-            ImageBrush vertheatmap = new ImageBrush(createVerticalHeatmap(150, (int)screenheight, yCoords[0], numCoords[0], 4330, 5, colors));
+            ImageBrush[] verticalheatmaps = new ImageBrush[inputFile.Length];
+            for(int c = 0; c < inputFile.Length; c++) {
+                verticalheatmaps[c] = new ImageBrush(createVerticalHeatmap(200, 2*(int)screenheight, yCoords[c], numCoords[c], 4330, 2*13, colors[c]));
+            }
 
-            scrollbar = new Scrollbar(15, 150, screenheight, screenwidth, 0.9, 100, bg, blankbg, handle, vertheatmap, canv, 1, wb, heatmap, pixels3d);
+            scrollbar = new Scrollbar(15, 150, screenheight, screenwidth, 0.9, 100, bg, blankbg, handle, verticalheatmaps, canv, 1, wb, heatmap, pixels3d);
 
             eyeXHost = new EyeXHost();
             eyeXHost.Start();
@@ -108,9 +114,10 @@ namespace scrollbarvis
         }
 
         public class Scrollbar {
-            private Rectangle handle, blankbg, heatmapbg, picturebg, hover, bg;
+            private Rectangle handle, blankbg, picturebg, hover, bg;
+            private Rectangle[] heatmapbgs;
             private double inwidth, outwidth, currwidth, scrheight, scrwidth, smooth;
-            private int z;
+            private int z, topz;
             private int gazetimer;
             private int persistance;
             public bool needsupdate;
@@ -125,7 +132,7 @@ namespace scrollbarvis
 
 
             public Scrollbar(double collapsedwidth, double expandedwidth, double screenheight, double screenwidth, double smoothness, int duration,
-                             Rectangle background, SolidColorBrush blank, SolidColorBrush hand, ImageBrush vertheatmap, Canvas canv, int zindex,
+                             Rectangle background, SolidColorBrush blank, SolidColorBrush hand, ImageBrush[] vertheatmaps, Canvas canv, int zindex,
                              WriteableBitmap writeableBitmap, Image heatmapImage, List<byte[,,]> heatmapPixels) {
                 inwidth = collapsedwidth;
                 outwidth = expandedwidth;
@@ -138,56 +145,73 @@ namespace scrollbarvis
                 z = zindex;
                 gazetimer = 0;
                 needsupdate = false;
+                heatmapbgs = new Rectangle[vertheatmaps.Length];
 
-                handle = new Rectangle();
-                handle.Width = inwidth;
-                handle.Height = scrheight / bg.Height * scrheight;
-                Canvas.SetRight(handle, 0);
-                Canvas.SetTop(handle, 0);
-                Panel.SetZIndex(handle, z + 4);
-                handle.Fill = hand;
-                handle.IsHitTestVisible = false;
-                canv.Children.Add(handle);
-
-                blankbg = new Rectangle();
-                blankbg.Width = inwidth;
-                blankbg.Height = scrheight;
-                Canvas.SetRight(blankbg, 0);
-                Canvas.SetTop(blankbg, 0);
-                Panel.SetZIndex(blankbg, z + 3);
-                blankbg.Fill = blank;
-                blankbg.PreviewMouseDown += mousedown;
-                blankbg.PreviewMouseWheel += mousescroll;
-                canv.Children.Add(blankbg);
-
-                heatmapbg = new Rectangle();
-                heatmapbg.Width = inwidth;
-                heatmapbg.Height = scrheight;
-                Canvas.SetRight(heatmapbg, 0);
-                Canvas.SetTop(heatmapbg, 0);
-                Panel.SetZIndex(heatmapbg, z + 2);
-                heatmapbg.Fill = vertheatmap;
-                canv.Children.Add(heatmapbg);
-
-                picturebg = new Rectangle();
-                picturebg.Width = inwidth;
-                picturebg.Height = scrheight;
-                Canvas.SetRight(picturebg, 0);
-                Canvas.SetTop(picturebg, 0);
-                Panel.SetZIndex(picturebg, z + 1);
-                picturebg.Fill = background.Fill;
-                canv.Children.Add(picturebg);
+                int zind = z;
 
                 hover = new Rectangle();
                 hover.Width = 3000;
                 hover.Height = 3000;
-                Panel.SetZIndex(hover, z);
+                Panel.SetZIndex(hover, zind);
                 hover.Fill = blank;
                 hover.Opacity = 0;
                 hover.PreviewMouseMove += mousemove;
                 hover.PreviewMouseUp += mouseup;
                 hover.PreviewMouseWheel += mousescroll;
                 canv.Children.Add(hover);
+
+                zind++;
+
+                picturebg = new Rectangle();
+                picturebg.Width = outwidth;
+                picturebg.Height = scrheight;
+                Canvas.SetRight(picturebg, inwidth - outwidth);
+                Canvas.SetTop(picturebg, 0);
+                Panel.SetZIndex(picturebg, zind);
+                picturebg.Fill = background.Fill;
+                canv.Children.Add(picturebg);
+
+                zind++;
+
+                for (int i = 0; i < heatmapbgs.Length; i++)
+                {
+                    heatmapbgs[i] = new Rectangle();
+                    heatmapbgs[i].Width = outwidth;
+                    heatmapbgs[i].Height = scrheight;
+                    Canvas.SetRight(heatmapbgs[i], inwidth - outwidth);
+                    Canvas.SetTop(heatmapbgs[i], 0);
+                    Panel.SetZIndex(heatmapbgs[i], zind);
+                    heatmapbgs[i].Fill = vertheatmaps[i];
+                    heatmapbgs[i].Opacity = 1 / (double)heatmapbgs.Length;
+                    canv.Children.Add(heatmapbgs[i]);
+
+                    zind++;
+                }
+
+                blankbg = new Rectangle();
+                blankbg.Width = inwidth;
+                blankbg.Height = scrheight;
+                Canvas.SetRight(blankbg, 0);
+                Canvas.SetTop(blankbg, 0);
+                Panel.SetZIndex(blankbg, zind);
+                blankbg.Fill = blank;
+                blankbg.PreviewMouseDown += mousedown;
+                blankbg.PreviewMouseWheel += mousescroll;
+                canv.Children.Add(blankbg);
+
+                zind++;
+
+                handle = new Rectangle();
+                handle.Width = inwidth;
+                handle.Height = scrheight / bg.Height * scrheight;
+                Canvas.SetRight(handle, 0);
+                Canvas.SetTop(handle, 0);
+                Panel.SetZIndex(handle, zind);
+                handle.Fill = hand;
+                handle.IsHitTestVisible = false;
+                canv.Children.Add(handle);
+
+                topz = zind + 1;
 
                 /* Screen Heatmap */
                 wb = writeableBitmap;
@@ -285,10 +309,8 @@ namespace scrollbarvis
 
             public void checkGaze(Point p) {
                 gazetimer--;
-                if (scrwidth - p.X < inwidth * 2 ||
-                    gazetimer > 0 && scrwidth - p.X < outwidth * 2 ||
-                    blankbg.IsMouseOver ||
-                    Panel.GetZIndex(hover) == z + 5)
+                if (scrwidth - p.X < outwidth || gazetimer > 0 && scrwidth - p.X < outwidth * 2 ||
+                    blankbg.IsMouseOver || Panel.GetZIndex(hover) == topz)
                     gazetimer = persistance;
                 needsupdate = needsupdate || gazetimer > 0;
             }
@@ -306,19 +328,20 @@ namespace scrollbarvis
                 }
                 handle.Width = currwidth;
                 blankbg.Width = currwidth;
-                heatmapbg.Width = currwidth;
-                picturebg.Width = currwidth;
+                for (int i = 0; i < heatmapbgs.Length; i++)
+                    Canvas.SetRight(heatmapbgs[i], currwidth - outwidth);
+                Canvas.SetRight(picturebg, currwidth - outwidth);
 
                 double inpercentage = (outwidth - currwidth) / (outwidth - inwidth);
                 blankbg.Opacity = inpercentage;
-                handle.Opacity = inpercentage + .25;
+                handle.Opacity = inpercentage + .15;
             }
 
             private void mousedown(object sender, MouseButtonEventArgs e) {
-                Panel.SetZIndex(hover, z + 5);
+                Panel.SetZIndex(hover, topz);
             }
             private void mousemove(object sender, MouseEventArgs e) {
-                if (Panel.GetZIndex(hover) == z + 5) {
+                if (Panel.GetZIndex(hover) == topz) {
                     double handley = e.GetPosition(hover).Y - handle.Height / 2;
                     handley = handley > 0 ? handley : 0;
                     handley = handley + handle.Height < scrheight ? handley : scrheight - handle.Height;
@@ -328,11 +351,11 @@ namespace scrollbarvis
                 }
             }
             private void mouseup(object sender, MouseEventArgs e) {
-                if (Panel.GetZIndex(hover) == z + 5)
+                if (Panel.GetZIndex(hover) == topz)
                 {
                     /* Set Heatmap */
                     double y = -1 * bgTopPosition;
-                    setScreenHeatmap((int)(y < 0 ? 0 : y));
+                    //setScreenHeatmap((int)(y < 0 ? 0 : y));
                 }
                 Panel.SetZIndex(hover, z);
             }
@@ -346,7 +369,7 @@ namespace scrollbarvis
                 Canvas.SetTop(bg, bgTopPosition);
                 /* Set Heatmap*/
                 double y = -1 * bgTopPosition;
-                setScreenHeatmap((int)(y < 0 ? 0 : y));
+                //setScreenHeatmap((int)(y < 0 ? 0 : y));
             }
 
             /*
@@ -424,7 +447,7 @@ namespace scrollbarvis
             byte[,,] pixels = new byte[width, height, 4];
             
             for (int y = 0; y < frequencies.Length; y++) {
-                byte alpha = (byte)(255 * frequencies[y] / (double)maxfrequency);
+                byte alpha = (byte)(155 * frequencies[y] / (double)maxfrequency + 100);
                 double color = (colors.GetLength(0) - 1) * frequencies[y] / (double)maxfrequency;
                 byte b, g, r;
                 int colorlow = (int)color;
@@ -433,7 +456,8 @@ namespace scrollbarvis
                 b = (byte)(colors[colorlow, 0] * (1 - color) + colors[colorhigh, 0] * color);
                 g = (byte)(colors[colorlow, 1] * (1 - color) + colors[colorhigh, 1] * color);
                 r = (byte)(colors[colorlow, 2] * (1 - color) + colors[colorhigh, 2] * color);
-                for (int x = 0; x < width; x++) {
+                for (int i = 1; i <= Math.Pow(frequencies[y]/(double)maxfrequency, 1.0/2.5) * width; i++) {
+                    int x = width - i;
                     pixels[x, y, 0] = b;
                     pixels[x, y, 1] = g;
                     pixels[x, y, 2] = r;
