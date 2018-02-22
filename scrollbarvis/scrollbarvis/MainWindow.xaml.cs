@@ -60,8 +60,8 @@ namespace scrollbarvis
                 xCoords[c] = points[0];
                 yCoords[c] = points[1];
                 /* Create a heatmap for each file, save to List of byte arrays */
-                //px = createScreenHeatmap(xCoords[c], yCoords[c], c);
-                //pixels3d.Add(px);
+                px = createScreenHeatmap(xCoords[c], yCoords[c], c);
+                pixels3d.Add(px);
             }
         }
 
@@ -355,7 +355,7 @@ namespace scrollbarvis
                 {
                     /* Set Heatmap */
                     double y = -1 * bgTopPosition;
-                    //setScreenHeatmap((int)(y < 0 ? 0 : y));
+                    setScreenHeatmap((int)(y < 0 ? 0 : y));
                 }
                 Panel.SetZIndex(hover, z);
             }
@@ -369,7 +369,7 @@ namespace scrollbarvis
                 Canvas.SetTop(bg, bgTopPosition);
                 /* Set Heatmap*/
                 double y = -1 * bgTopPosition;
-                //setScreenHeatmap((int)(y < 0 ? 0 : y));
+                setScreenHeatmap((int)(y < 0 ? 0 : y));
             }
 
             /*
@@ -531,9 +531,9 @@ namespace scrollbarvis
             int totalWidth = (int)bg.Width;
             int totalHeight = (int)bg.Height;
             int x, y;
-            double distanceFromCenter, distanceRatio, currA, b, g, r, a, secondColor;
-            int maxDistance = 130;
-            double maxOpacity = 200;
+            double distanceFromCenter, currA, b, g, r, a, secondColor;
+            int maxDistance = 80;
+            double maxOpacity = 240;
             double maxSecondColor = 60;
             double mainColor = 255;
 
@@ -544,9 +544,9 @@ namespace scrollbarvis
             for (int i = 0; i < numCoords[index]; i++)
             {
                 x = xCor[i]; y = yCor[i];
-                for (int j = (x - maxDistance) < 0 ? 0 : (x - maxDistance); j < ((x + maxDistance) > totalWidth ? totalWidth : (x + maxDistance)); j++)
+                for (int j = (x - maxDistance) < 0 ? 0 : (x - maxDistance); j < ((x + maxDistance) > totalWidth ? totalWidth : (x + maxDistance)); j=j+3)
                 {
-                    for (int k = (y - maxDistance) < 0 ? 0 : (y - maxDistance); k < ((y + maxDistance) > totalHeight ? totalHeight : (y + maxDistance)); k++)
+                    for (int k = (y - maxDistance) < 0 ? 0 : (y - maxDistance); k < ((y + maxDistance) > totalHeight ? totalHeight : (y + maxDistance)); k=k+3)
                     {
                         distanceFromCenter = Math.Sqrt((double)(Math.Pow(x - j,2) + Math.Pow(y - k,2)));
                         if (distanceFromCenter <= (double)maxDistance)
@@ -554,7 +554,7 @@ namespace scrollbarvis
                             currA = pixels[j, k, 3];
                             // distanceRatio = distanceFromCenter / maxDistance;
 
-                            a = currA + (1 - currA/maxOpacity) * 35 * Math.Pow(0.95, distanceFromCenter); // EXPONENTIAL DECAY
+                            a = currA + (1 - currA/maxOpacity)*90 * Math.Pow(0.965, distanceFromCenter); // EXPONENTIAL DECAY
                             //a = currA + 5 * (1 - currA/255) * (1 - distanceRatio); // Add less opacity to current value if farther from gaze coordinate
                             a = (a > maxOpacity ? maxOpacity : a);
 
