@@ -60,8 +60,8 @@ namespace scrollbarvis
                 xCoords[c] = points[0];
                 yCoords[c] = points[1];
                 /* Create a heatmap for each file, save to List of byte arrays */
-                px = createScreenHeatmap(xCoords[c], yCoords[c], c);
-                pixels3d.Add(px);
+                //px = createScreenHeatmap(xCoords[c], yCoords[c], c);
+                //pixels3d.Add(px);
             }
         }
 
@@ -79,7 +79,7 @@ namespace scrollbarvis
 
             ImageBrush[] verticalheatmaps = new ImageBrush[inputFile.Length];
             for(int c = 0; c < inputFile.Length; c++) {
-                verticalheatmaps[c] = new ImageBrush(createVerticalHeatmap(200, 2*(int)screenheight, yCoords[c], numCoords[c], 4330, 2*13, colors[c]));
+                verticalheatmaps[c] = new ImageBrush(createVerticalHeatmap(200, 2*(int)screenheight, yCoords[c], numCoords[c], 4330, 2*13, colors[c], 45));
             }
 
             scrollbar = new Scrollbar(15, 150, screenheight, screenwidth, 0.9, 100, bg, blankbg, handle, verticalheatmaps, canv, 1, wb, heatmap, pixels3d);
@@ -182,7 +182,7 @@ namespace scrollbarvis
                     Canvas.SetTop(heatmapbgs[i], 0);
                     Panel.SetZIndex(heatmapbgs[i], zind);
                     heatmapbgs[i].Fill = vertheatmaps[i];
-                    heatmapbgs[i].Opacity = 1 / (double)heatmapbgs.Length;
+                    heatmapbgs[i].Opacity = 2 / (double)heatmapbgs.Length;
                     canv.Children.Add(heatmapbgs[i]);
 
                     zind++;
@@ -355,7 +355,7 @@ namespace scrollbarvis
                 {
                     /* Set Heatmap */
                     double y = -1 * bgTopPosition;
-                    setScreenHeatmap((int)(y < 0 ? 0 : y));
+                    //setScreenHeatmap((int)(y < 0 ? 0 : y));
                 }
                 Panel.SetZIndex(hover, z);
             }
@@ -369,7 +369,7 @@ namespace scrollbarvis
                 Canvas.SetTop(bg, bgTopPosition);
                 /* Set Heatmap*/
                 double y = -1 * bgTopPosition;
-                setScreenHeatmap((int)(y < 0 ? 0 : y));
+                //setScreenHeatmap((int)(y < 0 ? 0 : y));
             }
 
             /*
@@ -432,7 +432,7 @@ namespace scrollbarvis
             }
         }
 
-        public WriteableBitmap createVerticalHeatmap(int width, int height, List<int> yCoords, int numCoords, double maxY, int spread, byte[,] colors) {
+        public WriteableBitmap createVerticalHeatmap(int width, int height, List<int> yCoords, int numCoords, double maxY, int spread, byte[,] colors, int minalpha) {
             int[] frequencies = new int[height];
             int maxfrequency = 0;
             for (int i = 0; i < numCoords; i++) {
@@ -447,7 +447,7 @@ namespace scrollbarvis
             byte[,,] pixels = new byte[width, height, 4];
             
             for (int y = 0; y < frequencies.Length; y++) {
-                byte alpha = (byte)(155 * frequencies[y] / (double)maxfrequency + 100);
+                byte alpha = (byte)((255 - minalpha) * frequencies[y] / (double)maxfrequency + minalpha);
                 double color = (colors.GetLength(0) - 1) * frequencies[y] / (double)maxfrequency;
                 byte b, g, r;
                 int colorlow = (int)color;
@@ -456,12 +456,13 @@ namespace scrollbarvis
                 b = (byte)(colors[colorlow, 0] * (1 - color) + colors[colorhigh, 0] * color);
                 g = (byte)(colors[colorlow, 1] * (1 - color) + colors[colorhigh, 1] * color);
                 r = (byte)(colors[colorlow, 2] * (1 - color) + colors[colorhigh, 2] * color);
-                for (int i = 1; i <= Math.Pow(frequencies[y]/(double)maxfrequency, 1.0/2.5) * width; i++) {
-                    int x = width - i;
+                int start = width - (int)Math.Floor(Math.Pow(frequencies[y] / (double)maxfrequency, 1.0 / 2.5) * width);
+                for (int x = start; x < width; x++) {
+                    byte a = (byte)((alpha - minalpha) * (1 - (x - start) / (double)(width - start)) + minalpha);
                     pixels[x, y, 0] = b;
                     pixels[x, y, 1] = g;
                     pixels[x, y, 2] = r;
-                    pixels[x, y, 3] = alpha;
+                    pixels[x, y, 3] = a;
                 }
             }
 
