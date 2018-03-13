@@ -33,7 +33,7 @@ namespace scrollbarvis
         StringBuilder csv = new StringBuilder();
         String filePath;
         String pathStart = "gazerecordings/recording";
-        bool recorded = false;
+        bool recording = false;
 
         String[] inputFile = { "gazerecordings/recording0.csv", "gazerecordings/recording1.csv", "gazerecordings/recording2.csv"};
 
@@ -77,12 +77,27 @@ namespace scrollbarvis
             colors.Add(new byte[,] { { 0, 255, 0 } });
             colors.Add(new byte[,] { { 0, 0, 255 } });
 
+            //List<byte[]> colors = new List<byte[]>(3);
+            //colors.Add(new byte[] { 255, 0, 0 });
+            //colors.Add(new byte[] { 0, 255, 0 });
+            //colors.Add(new byte[] { 0, 0, 255 });
+
             ImageBrush[] verticalheatmaps = new ImageBrush[inputFile.Length];
+            List<double> freqs = new List<double>(inputFile.Length);
             for(int c = 0; c < inputFile.Length; c++) {
-                verticalheatmaps[c] = new ImageBrush(createVerticalHeatmap(200, 2*(int)screenheight, yCoords[c], numCoords[c], 4330, 2*13, colors[c], 45));
+                Tuple<int, WriteableBitmap> vert = createVerticalHeatmap(200, 2 * (int)screenheight, yCoords[c], numCoords[c], 4330, 2 * 13, colors[c], 55);
+                //Tuple<int, WriteableBitmap> vert = createMultiHeatmap(200, 2 * (int)screenheight, yCoords, numCoords, 4330, 2 * 13, colors, 55);
+                verticalheatmaps[c] = new ImageBrush(vert.Item2);
+                freqs.Add(vert.Item1);
             }
 
-            scrollbar = new Scrollbar(15, 150, screenheight, screenwidth, 0.9, 100, bg, blankbg, handle, verticalheatmaps, canv, 1, wb, heatmap, pixels3d);
+            double maxfreq = freqs.Max();
+            for (int c = 0; c < inputFile.Length; c++) {
+                freqs[c] = freqs[c] / maxfreq;
+            }
+                
+
+            scrollbar = new Scrollbar(15, 150, screenheight, screenwidth, 0.9, 100, bg, blankbg, handle, verticalheatmaps, freqs, canv, 1, wb, heatmap, pixels3d);
 
             eyeXHost = new EyeXHost();
             eyeXHost.Start();
@@ -132,7 +147,7 @@ namespace scrollbarvis
 
 
             public Scrollbar(double collapsedwidth, double expandedwidth, double screenheight, double screenwidth, double smoothness, int duration,
-                             Rectangle background, SolidColorBrush blank, SolidColorBrush hand, ImageBrush[] vertheatmaps, Canvas canv, int zindex,
+                             Rectangle background, SolidColorBrush blank, SolidColorBrush hand, ImageBrush[] vertheatmaps, List<double> vertscale, Canvas canv, int zindex,
                              WriteableBitmap writeableBitmap, Image heatmapImage, List<byte[,,]> heatmapPixels) {
                 inwidth = collapsedwidth;
                 outwidth = expandedwidth;
@@ -176,7 +191,7 @@ namespace scrollbarvis
                 for (int i = 0; i < heatmapbgs.Length; i++)
                 {
                     heatmapbgs[i] = new Rectangle();
-                    heatmapbgs[i].Width = outwidth;
+                    heatmapbgs[i].Width = outwidth*vertscale[i];
                     heatmapbgs[i].Height = scrheight;
                     Canvas.SetRight(heatmapbgs[i], inwidth - outwidth);
                     Canvas.SetTop(heatmapbgs[i], 0);
@@ -432,7 +447,7 @@ namespace scrollbarvis
             }
         }
 
-        public WriteableBitmap createVerticalHeatmap(int width, int height, List<int> yCoords, int numCoords, double maxY, int spread, byte[,] colors, int minalpha) {
+        public Tuple<int, WriteableBitmap> createVerticalHeatmap(int width, int height, List<int> yCoords, int numCoords, double maxY, int spread, byte[,] colors, int minalpha) {
             int[] frequencies = new int[height];
             int maxfrequency = 0;
             for (int i = 0; i < numCoords; i++) {
@@ -465,12 +480,88 @@ namespace scrollbarvis
                     pixels[x, y, 3] = a;
                 }
             }
-
             WriteableBitmap bmp = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgra32, null);
             Int32Rect rect = new Int32Rect(0, 0, width, height);
             int stride = 4 * width;
             bmp.WritePixels(rect, flattenArray(pixels), stride, 0);
-            return bmp;
+            return Tuple.Create(maxfrequency, bmp);
+        }
+
+        public Tuple<int, WriteableBitmap> createMultiHeatmap(int width, int height, List<int>[] yCoords, int[] numCoords, double maxY, int spread, List<byte[]> colors, int minalpha) {
+            int numusers = numCoords.Length;
+
+            int[,] frequencies = new int[numusers, height];
+            for(int u = 0; u < numusers; u++) {
+                for (int i = 0; i < numCoords[u]; i++) {
+                    for (int s = -spread; s <= spread; s++) {
+                        int y = (int)(height * yCoords[u][i]/maxY + s);
+                        if(y > 0 && y < height) { 
+                            frequencies[u, y] += spread - Math.Abs(s);
+                        }
+                    }
+                }
+            }
+
+            int maxfrequency = 0;
+            for (int u = 0; u < numusers; u++) {
+                for (int i = 0; i < numCoords[u]; i++) {
+                    int y = (int)(height * yCoords[u][i]/maxY);
+                    if(y > 0 && y < height)
+                        maxfrequency = frequencies[u, y] > maxfrequency ? frequencies[u, y] : maxfrequency;
+                }
+            }
+
+            byte[,,] pixels = new byte[width, height, 4];
+            //for (int y = 0; y < height; y++) {
+            //    byte[] alpha = new byte[numusers];
+            //    int[] start = new int[numusers];
+            //    for (int u = 0; u < numusers; u++) {
+            //        alpha[u] = (byte)((255 - minalpha) * frequencies[u, y] / (double)maxfrequency + minalpha);
+            //        start[u] = width - (int)Math.Floor(Math.Pow(frequencies[u, y] / (double)maxfrequency, 1.0 / 2.5) * width);
+            //    }
+            //    for (int x = 0; x < width; x++) {
+            //        double pixelalpha = 0;
+            //        byte[] a = new byte[numusers];
+            //        for (int u = 0; u < numusers; u++){
+            //            a[u] = (byte)((alpha[u] - minalpha) * (1 - (x - start[u]) / (double)(width - start[u])) + minalpha);
+            //            if(x > start[u])
+            //                pixelalpha += a[u];
+            //        }
+            //        bool vis = false;
+            //        for(int c = 0; c < 3; c++) {
+            //            for (int u = 0; u < numusers; u++) {
+            //                if(x >= start[u]) {
+            //                    pixels[x, y, c] += (byte)(colors[u][c]*(a[u]/pixelalpha));
+            //                    vis = true;
+            //                }
+            //            }
+            //        }
+            //        if (vis)
+            //            pixels[x, y, 3] = pixelalpha > 255 ? (byte)255 : (byte)pixelalpha;
+            //        else
+            //            pixels[x, y, 3] = 0;
+            //    }
+            //}
+            
+            for (int u = 0; u < numusers; u++) {
+                for (int y = 0; y < height; y++) {
+                    byte alpha = (byte)((255 - minalpha) * frequencies[u, y] / (double)maxfrequency + minalpha);
+                    int start = width - (int)Math.Floor(Math.Pow(frequencies[u, y] / (double)maxfrequency, 1.0 / 2.5) * width);
+                    for (int x = start; x < width; x++) {
+                        byte a = (byte)((alpha - minalpha) * (1 - (x - start) / (double)(width - start)) + minalpha);
+                        pixels[x, y, 0] += colors[u][0];
+                        pixels[x, y, 1] += colors[u][1];
+                        pixels[x, y, 2] += colors[u][2];
+                        pixels[x, y, 3] += a;
+                    }
+                }
+            }
+            
+            WriteableBitmap bmp = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgra32, null);
+            Int32Rect rect = new Int32Rect(0, 0, width, height);
+            int stride = 4 * width;
+            bmp.WritePixels(rect, flattenArray(pixels), stride, 0);
+            return Tuple.Create(maxfrequency, bmp);
         }
 
         public byte[] flattenArray(byte[,,] shaped) {
@@ -494,7 +585,7 @@ namespace scrollbarvis
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e){
-            if(recorded)
+            if(recording)
                 File.WriteAllText(filePath, csv.ToString());
         }
 
