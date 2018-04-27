@@ -26,7 +26,9 @@ namespace scrollbarvis
         List<int>[] xCoords, yCoords;
         int[] numCoords;
         WriteableBitmap wb;
+        WriteableBitmap[] bitmaps;
         List<byte[,,]> pixels3d;
+        List<int[]> allPixels;
 
         Scrollbar scrollbar;
 
@@ -60,8 +62,8 @@ namespace scrollbarvis
                 xCoords[c] = points[0];
                 yCoords[c] = points[1];
                 /* Create a heatmap for each file, save to List of byte arrays */
-                //px = createScreenHeatmap(xCoords[c], yCoords[c], c);
-                //pixels3d.Add(px);
+                px = createScreenHeatmap(xCoords[c], yCoords[c], c, numCoords[c]/2);
+                pixels3d.Add(px);
             }
         }
 
@@ -145,6 +147,8 @@ namespace scrollbarvis
             bool[] heatmapShown;
             double bgTopPosition = 0;
 
+            /* Playback */
+            Slider slider0;
 
             public Scrollbar(double collapsedwidth, double expandedwidth, double screenheight, double screenwidth, double smoothness, int duration,
                              Rectangle background, SolidColorBrush blank, SolidColorBrush hand, ImageBrush[] vertheatmaps, List<double> vertscale, Canvas canv, int zindex,
@@ -262,6 +266,19 @@ namespace scrollbarvis
                             heatmapButtons[i].Background = new SolidColorBrush(Colors.Red);
                             break;
                     }
+                    /*
+                    slider0 = new Slider();
+                    slider0.Width = 100;
+                    slider0.Name = "Slider0";
+                    slider0.Minimum = 0;
+                    slider0.Maximum = 100;
+                    slider0.IsSnapToTickEnabled = true;
+                    slider0.ValueChanged += new RoutedPropertyChangedEventHandler<double>(Slider0_ValueChanged);
+
+                    canv.Children.Add(slider0);
+                    Canvas.SetTop(slider0, 10 + 50 * pixels.Count);
+                    Canvas.SetRight(slider0, outwidth + 10);
+                    */
                 }
             }
 
@@ -306,8 +323,7 @@ namespace scrollbarvis
                 heatmapShown[index] = true;
                 heatmapButtons[index].Content = "Hide heatmap";
 
-                double y = -1 * bgTopPosition;
-                setScreenHeatmap((int)(y < 0 ? 0 : y));
+                setScreenHeatmap();
                 heatmap.Visibility = Visibility.Visible;
             }
             /*
@@ -318,8 +334,7 @@ namespace scrollbarvis
                 heatmapShown[index] = false;
                 heatmapButtons[index].Content = "Show heatmap";
 
-                double y = -1 * bgTopPosition;
-                setScreenHeatmap((int)(y < 0 ? 0 : y));
+                setScreenHeatmap();
             }
 
             public void checkGaze(Point p) {
@@ -369,8 +384,7 @@ namespace scrollbarvis
                 if (Panel.GetZIndex(hover) == topz)
                 {
                     /* Set Heatmap */
-                    double y = -1 * bgTopPosition;
-                    //setScreenHeatmap((int)(y < 0 ? 0 : y));
+                    setScreenHeatmap();
                 }
                 Panel.SetZIndex(hover, z);
             }
@@ -383,15 +397,17 @@ namespace scrollbarvis
                 bgTopPosition = -handley * (bg.Height / scrheight);
                 Canvas.SetTop(bg, bgTopPosition);
                 /* Set Heatmap*/
-                double y = -1 * bgTopPosition;
-                //setScreenHeatmap((int)(y < 0 ? 0 : y));
+                setScreenHeatmap();
             }
 
             /*
             * Set bitmap for the portion of screen starting at Y position screenPositionTop
             */
-            private void setScreenHeatmap(int screenPositionTop)
+            public void setScreenHeatmap()
             {
+                // Find screen position
+                double y = -1 * bgTopPosition;
+                int screenPositionTop = (int)(y < 0 ? 0 : y);
                 // Check if any heatmaps are shown
                 int numHeatmaps = 0;
                 for (int h=0; h<heatmapShown.Length; h++)
@@ -618,7 +634,7 @@ namespace scrollbarvis
         /*
          * Create a bitmap of heatmap pixels. Color based on frequency of gaze coordinates at the pixel, plus color surrounding pixels.
          */
-        private byte[,,] createScreenHeatmap(List<int> xCor, List<int> yCor, int index)
+        private byte[,,] createScreenHeatmap(List<int> xCor, List<int> yCor, int index, int numCoords)
         {
             int totalWidth = (int)bg.Width;
             int totalHeight = (int)bg.Height;
@@ -631,9 +647,10 @@ namespace scrollbarvis
 
             wb = new WriteableBitmap(totalWidth, totalHeight, 96, 96, PixelFormats.Bgra32, null);
             byte[,,] pixels = new byte[totalWidth, totalHeight, 4];
+            allPixels = new List<int[]>(numCoords); // all pixels in order to populate
 
             // Get gaze coordinates, change pixel colors
-            for (int i = 0; i < numCoords[index]; i++)
+            for (int i = 0; i < numCoords; i++)
             {
                 x = xCor[i]; y = yCor[i];
                 for (int j = (x - maxDistance) < 0 ? 0 : (x - maxDistance); j < ((x + maxDistance) > totalWidth ? totalWidth : (x + maxDistance)); j=j+3)
@@ -675,11 +692,41 @@ namespace scrollbarvis
                             pixels[j, k, 1] = (byte)g;
                             pixels[j, k, 2] = (byte)r;
                             pixels[j, k, 3] = (byte)a;
+
+                            allPixels.Add(new int[] { (int)b, (int)g, (int)r, (int)a, (int)j, (int)k });
                         }
                     } 
                 }
             }
+
             return pixels;
+        }
+        #endregion
+
+        private void displayPoint(List<int[]> pxList,int index)
+        {
+            int[] pxInfo = pxList[index];
+            int[] pxArray = new int[] { pxInfo[0], pxInfo[1], pxInfo[2], pxInfo[3]};
+            if (pxInfo!=null)
+            {
+                Int32Rect rect = new Int32Rect(pxInfo[4], pxInfo[5], 1, 1);
+                int stride = 4;
+                wb.WritePixels(rect, pxArray, stride, 0);
+                heatmap.Stretch = Stretch.None;
+                heatmap.Margin = new Thickness(0);
+                heatmap.Source = wb;
+            }
+        }
+
+        #region playback
+        private void Slider0_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            // do something with Slider0.Value
+            for (int i = 0; i < numCoords[0] / 5; i++)
+            {
+                displayPoint(allPixels, i);
+            }
+           // this.scrollbar.setScreenHeatmap();
         }
         #endregion
     }
