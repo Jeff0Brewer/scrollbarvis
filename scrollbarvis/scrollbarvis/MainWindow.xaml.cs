@@ -38,6 +38,9 @@ namespace scrollbarvis
         bool recording = false;
 
         String[] inputFile = { "gazerecordings/recording0.csv", "gazerecordings/recording1.csv", "gazerecordings/recording2.csv"};
+        System.Windows.Threading.DispatcherTimer animateTimer;
+        int coordNum;
+        Ellipse[] ellipses;
 
         public MainWindow()
         {
@@ -110,6 +113,7 @@ namespace scrollbarvis
             dispatcherTimer.Tick += new EventHandler(update);
             dispatcherTimer.Interval = new TimeSpan(0, 0, 0, 0, 10);
             dispatcherTimer.Start();
+
         }
 
         private void newGazePoint(object s, EyeXFramework.GazePointEventArgs e)
@@ -148,7 +152,7 @@ namespace scrollbarvis
             double bgTopPosition = 0;
 
             /* Playback */
-            Slider slider0;
+            Canvas canv;
 
             public Scrollbar(double collapsedwidth, double expandedwidth, double screenheight, double screenwidth, double smoothness, int duration,
                              Rectangle background, SolidColorBrush blank, SolidColorBrush hand, ImageBrush[] vertheatmaps, List<double> vertscale, Canvas canv, int zindex,
@@ -165,7 +169,7 @@ namespace scrollbarvis
                 gazetimer = 0;
                 needsupdate = false;
                 heatmapbgs = new Rectangle[vertheatmaps.Length];
-
+                this.canv = canv;
                 int zind = z;
 
                 hover = new Rectangle();
@@ -266,22 +270,10 @@ namespace scrollbarvis
                             heatmapButtons[i].Background = new SolidColorBrush(Colors.Red);
                             break;
                     }
-                    /*
-                    slider0 = new Slider();
-                    slider0.Width = 100;
-                    slider0.Name = "Slider0";
-                    slider0.Minimum = 0;
-                    slider0.Maximum = 100;
-                    slider0.IsSnapToTickEnabled = true;
-                    slider0.ValueChanged += new RoutedPropertyChangedEventHandler<double>(Slider0_ValueChanged);
 
-                    canv.Children.Add(slider0);
-                    Canvas.SetTop(slider0, 10 + 50 * pixels.Count);
-                    Canvas.SetRight(slider0, outwidth + 10);
-                    */
                 }
             }
-
+           
             /*
              * Show/Hide heatmap buttons handler.
              */
@@ -418,7 +410,6 @@ namespace scrollbarvis
                 // Copy the data into a one-dimensional array.
                 byte[] pixels1d = new byte[height * width * 4];
                 int index = 0;
-                int currVal, newVal;
                 for (int row = screenPositionTop; row < screenPositionTop+height; row++)
                 {
                     for (int col = 0; col < width; col++)
@@ -430,6 +421,7 @@ namespace scrollbarvis
                         {
                             if (heatmapShown[h])
                             {
+                                /* Combine three heatmaps */
                                 opacity = pixels[h][col, row, 3];
                                 totalOpacity += pixels[h][col, row, 3];
                                 if (opacity > maxOpacity) maxOpacity = opacity;
@@ -455,7 +447,9 @@ namespace scrollbarvis
                 // Update writeable bitmap
                 Int32Rect rect = new Int32Rect(0, 0, width, height);
                 int stride = 4 * width;
-                wb.WritePixels(rect, pixels1d, stride, 0);
+                byte[] destArray = new byte[height * width * 4];
+                Array.Copy(pixels1d, destArray, height * width*4);
+                wb.WritePixels(rect, destArray, stride, 0);
 
                 heatmap.Stretch = Stretch.None;
                 heatmap.Margin = new Thickness(0);
@@ -701,6 +695,7 @@ namespace scrollbarvis
 
             return pixels;
         }
+        
         #endregion
 
         private void displayPoint(List<int[]> pxList,int index)
@@ -727,6 +722,78 @@ namespace scrollbarvis
                 displayPoint(allPixels, i);
             }
            // this.scrollbar.setScreenHeatmap();
+        }
+        private void startAnimate()
+        {
+            initializeAnimate(numCoords[0]);
+            coordNum = 0;
+            animateTimer = new System.Windows.Threading.DispatcherTimer(System.Windows.Threading.DispatcherPriority.Render);
+            animateTimer.Tick += animate_tick;
+            animateTimer.Interval = new TimeSpan(0, 0, 0, 0, 10); //days,hrs,min,sec,ms
+            animateTimer.Start();
+        }
+
+        private void animate_tick(object sender, EventArgs e)
+        {
+            if (coordNum == numCoords[0])
+            {
+                animateTimer.Stop();
+            }
+            int[] students = new int[] { 0 };
+            animate(students, coordNum, 0);
+            coordNum++;
+        }
+
+        private void animate(int[] students, int coordNum, int type)
+        {
+            for (int i=0; i<students.Length; i++)
+            {
+                // For all students to display
+                switch (type) {
+                    default:
+                        if (coordNum <= (xCoords[i]).Count && coordNum <= yCoords[i].Count)
+                        {
+                            drawHeatmap(xCoords[i][coordNum], yCoords[i][coordNum], coordNum);
+                        }
+                        break;
+                }
+            }
+        }
+        public void initializeAnimate(int numCoords)
+        {
+            ellipses = new Ellipse[numCoords];
+            for (int i = 0; i < ellipses.Length; i++)
+            {
+                ellipses[i] = new Ellipse();
+                ellipses[i].Width = 50;
+                ellipses[i].Height = 50;
+                ellipses[i].Opacity = 0.01;
+                Panel.SetZIndex(ellipses[i], 100);
+                ellipses[i].Visibility = Visibility.Visible;
+                ellipses[i].Fill = new SolidColorBrush(System.Windows.Media.Colors.Blue);
+                canv.Children.Add(ellipses[i]);
+            }
+        }
+
+        private void Animate_Click(object sender, RoutedEventArgs e)
+        {
+            startAnimate();
+        }
+
+        private void Clear_Animate_Click(object sender, RoutedEventArgs e)
+        {
+            for (int i=0; i<ellipses.Length; i++)
+            {
+                ellipses[i].Visibility = Visibility.Hidden;
+            }
+        }
+
+        public void drawHeatmap(int x, int y, int index)
+        {
+            Ellipse el = ellipses[index];
+            Canvas.SetLeft(el, x);
+            Canvas.SetTop(el, y);
+            el.Visibility = Visibility.Visible;
         }
         #endregion
     }

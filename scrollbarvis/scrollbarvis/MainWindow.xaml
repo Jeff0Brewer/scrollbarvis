@@ -18,6 +18,8 @@
         <Slider Name="Slider0" Canvas.Right="150" Canvas.Top="160" Panel.ZIndex="1000" Minimum="0" Maximum="100"
                 TickFrequency="5" IsSnapToTickEnabled="True" ValueChanged="Slider0_ValueChanged"
                 Width="100" Height="20" TickPlacement="BottomRight" Foreground="Blue" Margin="10"/>
+        <Button Name="Animate" Canvas.Right="150" Canvas.Top="210" Panel.ZIndex="1000" Width="100" Height="20" Click="Animate_Click"/>
+        <Button Name="Clear_Animate" Canvas.Right="150" Canvas.Top="260" Panel.ZIndex="1000" Width="100" Height="20" Click="Clear_Animate_Click"/>
         <TextBlock Text="{Binding Value, ElementName=Slider0, StringFormat={}{0:0}}" VerticalAlignment="Center"
                    Canvas.Right="150" Canvas.Top="210" Width="100" Height="20"/>
     </Canvas>
