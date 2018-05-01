@@ -41,6 +41,8 @@ namespace scrollbarvis
         System.Windows.Threading.DispatcherTimer animateTimer;
         int coordNum;
         Ellipse[] ellipses;
+        bool isAnimating = false;
+        bool isAnimatingPaused = false;
 
         public MainWindow()
         {
@@ -149,7 +151,7 @@ namespace scrollbarvis
             List<byte[,,]> pixels;
             Button[] heatmapButtons;
             bool[] heatmapShown;
-            double bgTopPosition = 0;
+            public double bgTopPosition = 0;
 
             /* Playback */
             Canvas canv;
@@ -716,12 +718,10 @@ namespace scrollbarvis
         #region playback
         private void Slider0_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            // do something with Slider0.Value
-            for (int i = 0; i < numCoords[0] / 5; i++)
+            /*if (isAnimating)
             {
-                displayPoint(allPixels, i);
-            }
-           // this.scrollbar.setScreenHeatmap();
+               coordNum = (int)(Slider0.Value / Slider0.Maximum * numCoords.Max());
+            }*/
         }
         private void startAnimate()
         {
@@ -729,7 +729,7 @@ namespace scrollbarvis
             coordNum = 0;
             animateTimer = new System.Windows.Threading.DispatcherTimer(System.Windows.Threading.DispatcherPriority.Render);
             animateTimer.Tick += animate_tick;
-            animateTimer.Interval = new TimeSpan(0, 0, 0, 0, 10); //days,hrs,min,sec,ms
+            animateTimer.Interval = new TimeSpan(0, 0, 0, 0, 30); //days,hrs,min,sec,ms
             animateTimer.Start();
         }
 
@@ -737,63 +737,90 @@ namespace scrollbarvis
         {
             if (coordNum == numCoords[0])
             {
+                isAnimating = false;
                 animateTimer.Stop();
             }
-            int[] students = new int[] { 0 };
-            animate(students, coordNum, 0);
-            coordNum++;
+            if (!isAnimatingPaused)
+            {
+                animate(coordNum, 0);
+                coordNum++;
+                //Slider0.Value = coordNum / numCoords.Max() * Slider0.Maximum; // update slider
+            }
         }
 
-        private void animate(int[] students, int coordNum, int type)
+        private void animate( int coordNum, int type)
         {
-            for (int i=0; i<students.Length; i++)
-            {
-                // For all students to display
-                switch (type) {
-                    default:
-                        if (coordNum <= (xCoords[i]).Count && coordNum <= yCoords[i].Count)
-                        {
-                            drawHeatmap(xCoords[i][coordNum], yCoords[i][coordNum], coordNum);
-                        }
-                        break;
-                }
+            // For all students to display
+            switch (type) {
+                default:
+                    drawNextCoordinate(coordNum);
+                    break;
             }
         }
         public void initializeAnimate(int numCoords)
         {
-            ellipses = new Ellipse[numCoords];
+            ellipses = new Ellipse[xCoords.Length];
             for (int i = 0; i < ellipses.Length; i++)
             {
                 ellipses[i] = new Ellipse();
-                ellipses[i].Width = 50;
-                ellipses[i].Height = 50;
-                ellipses[i].Opacity = 0.01;
+                ellipses[i].Width = 70;
+                ellipses[i].Height = 70;
                 Panel.SetZIndex(ellipses[i], 100);
-                ellipses[i].Visibility = Visibility.Visible;
-                ellipses[i].Fill = new SolidColorBrush(System.Windows.Media.Colors.Blue);
+                ellipses[i].Visibility = Visibility.Hidden;
+                ellipses[i].StrokeThickness = 2.0;
+                switch (i)
+                {
+                    case 0:
+                        ellipses[i].Stroke = new SolidColorBrush(System.Windows.Media.Colors.Blue);
+                        break;
+                    case 1:
+                        ellipses[i].Stroke = new SolidColorBrush(System.Windows.Media.Colors.Red);
+                        break;
+                    default:
+                        ellipses[i].Stroke = new SolidColorBrush(System.Windows.Media.Colors.Green);
+                        break;
+                }
+                
                 canv.Children.Add(ellipses[i]);
             }
         }
 
         private void Animate_Click(object sender, RoutedEventArgs e)
         {
-            startAnimate();
+            if (!isAnimating)
+            {
+                // start
+                isAnimating = true;
+                isAnimatingPaused = false;
+                startAnimate();
+            } else
+            {
+                // pause/resume
+                isAnimatingPaused = !isAnimatingPaused;
+            }
         }
 
         private void Clear_Animate_Click(object sender, RoutedEventArgs e)
         {
             for (int i=0; i<ellipses.Length; i++)
             {
-                ellipses[i].Visibility = Visibility.Hidden;
+                canv.Children.Remove(ellipses[i]);
             }
+            isAnimating = false;
         }
 
-        public void drawHeatmap(int x, int y, int index)
+        public void drawNextCoordinate(int coordNum)
         {
-            Ellipse el = ellipses[index];
-            Canvas.SetLeft(el, x);
-            Canvas.SetTop(el, y);
-            el.Visibility = Visibility.Visible;
+            double y = -1 * this.scrollbar.bgTopPosition;
+            int screenPositionTop = (int)(y < 0 ? 0 : y);
+            for (int i = 0; i < ellipses.Length; i++) {
+                if (coordNum < xCoords[i].Count && coordNum < yCoords[i].Count)
+                {
+                    Canvas.SetLeft(ellipses[i], xCoords[i][coordNum] - 25);
+                    Canvas.SetTop(ellipses[i], yCoords[i][coordNum] - 25 - screenPositionTop);
+                    ellipses[i].Visibility = Visibility.Visible;
+                }
+            }
         }
         #endregion
     }
