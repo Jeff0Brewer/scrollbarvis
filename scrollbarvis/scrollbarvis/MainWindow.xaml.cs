@@ -857,13 +857,18 @@ namespace scrollbarvis
         #endregion
 
         #region playback
-        private void Slider0_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        private void PlaybackSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            /*if (isAnimating)
+            if (isAnimating)
             {
-               coordNum = (int)(Slider0.Value / Slider0.Maximum * numCoords.Max());
-            }*/
+                isAnimatingPaused = true;
+                coordNum = (int)(PlaybackSlider.Value / PlaybackSlider.Maximum * numCoords.Max());
+                isAnimatingPaused = false; // start playing again
+                AnimatePlay.Visibility = Visibility.Hidden;
+                AnimatePause.Visibility = Visibility.Visible;
+            }
         }
+
         private void startAnimate()
         {
             initializeAnimate(numCoords[0]);
@@ -885,7 +890,7 @@ namespace scrollbarvis
             {
                 animate(coordNum, 0);
                 coordNum++;
-                //Slider0.Value = coordNum / numCoords.Max() * Slider0.Maximum; // update slider
+                PlaybackSlider.Value = (int) ((double)coordNum / numCoords.Max() * PlaybackSlider.Maximum); // update slider
             }
         }
 
@@ -935,11 +940,22 @@ namespace scrollbarvis
                 isAnimating = true;
                 isAnimatingPaused = false;
                 startAnimate();
+                AnimatePlay.Visibility = Visibility.Hidden;
+                AnimatePause.Visibility = Visibility.Visible;
             }
             else
             {
                 // pause/resume
                 isAnimatingPaused = !isAnimatingPaused;
+                if (AnimatePlay.Visibility == Visibility.Visible)
+                {
+                    AnimatePlay.Visibility = Visibility.Hidden;
+                    AnimatePause.Visibility = Visibility.Visible;
+                } else
+                {
+                    AnimatePlay.Visibility = Visibility.Visible;
+                    AnimatePause.Visibility = Visibility.Hidden;
+                }
             }
         }
 
@@ -950,6 +966,10 @@ namespace scrollbarvis
                 canv.Children.Remove(ellipses[i]);
             }
             isAnimating = false;
+            PlaybackSlider.Value = 0;
+            animateTimer.Stop();
+            AnimatePlay.Visibility = Visibility.Visible;
+            AnimatePause.Visibility = Visibility.Hidden;
         }
 
         public void drawNextCoordinate(int coordNum)

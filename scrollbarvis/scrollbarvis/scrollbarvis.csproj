@@ -36,6 +36,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
@@ -104,6 +105,15 @@
       <Project>{c9bbfbac-fd0f-46de-843f-f3620bf79dc2}</Project>
       <Name>EyeXFramework</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="images\pause_green.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="images\play_green.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="images\stop_red.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

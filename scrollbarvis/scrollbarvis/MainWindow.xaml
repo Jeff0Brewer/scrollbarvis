@@ -7,6 +7,7 @@
         mc:Ignorable="d"
         Title="MainWindow" WindowState="Maximized"
         Closing="Window_Closing">
+    <Window.Resources></Window.Resources>
     <Canvas Name="canv" Loaded="canvasloaded">
         <Rectangle Name="bg" Width="1501" Height="4330" Canvas.Top="0">
             <Rectangle.Fill>
@@ -15,12 +16,44 @@
         </Rectangle>
         <Image Name="heatmap" Width="1501" Height="4330" Visibility="Hidden"></Image>
         <TextBlock Name="test" Canvas.Left="0" Canvas.Top="0" Text="" Visibility="Hidden"></TextBlock>
-        <!--<Slider Name="Slider0" Canvas.Right="150" Canvas.Top="160" Panel.ZIndex="1000" Minimum="0" Maximum="100"
-                TickFrequency="5" IsSnapToTickEnabled="True" ValueChanged="Slider0_ValueChanged"
-                Width="100" Height="20" TickPlacement="BottomRight" Foreground="Blue" Margin="10"/>-->
-        <Button Name="Animate" Canvas.Right="100" Canvas.Top="10" Panel.ZIndex="1000" Width="20" Height="20" Click="Animate_Click"/>
-        <Button Name="Clear_Animate" Canvas.Right="70" Canvas.Top="10" Panel.ZIndex="1000" Width="20" Height="20" Click="Clear_Animate_Click"/>
-        <TextBlock Text="{Binding Value, ElementName=Slider0, StringFormat={}{0:0}}" VerticalAlignment="Center"
-                   Canvas.Right="150" Canvas.Top="210" Width="100" Height="20"/>
+        
+        <Slider Name="PlaybackSlider" Canvas.Right="10" Canvas.Bottom="0" Panel.ZIndex="1000" Minimum="0" Maximum="100"
+                TickFrequency="5" IsSnapToTickEnabled="True" ValueChanged="PlaybackSlider_ValueChanged"
+                Width="250" Height="20" TickPlacement="BottomRight" Foreground="Blue" Margin="10"/>
+        <Button Name="AnimatePlay" Canvas.Right="315" Canvas.Bottom="5" Panel.ZIndex="1000" Width="30" Height="30" Click="Animate_Click">
+            <Button.Template>
+                <ControlTemplate>
+                    <Rectangle Width="30" Height="30">
+                        <Rectangle.Fill>
+                            <ImageBrush Stretch="Fill" ImageSource="images/play_green.png"></ImageBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
+                </ControlTemplate>
+            </Button.Template>
+        </Button>
+        <Button Name="AnimatePause" Canvas.Right="315" Canvas.Bottom="5" Panel.ZIndex="1000" Width="30" Height="30" Visibility="Hidden" Click="Animate_Click">
+            <Button.Template>
+                <ControlTemplate>
+                    <Rectangle Width="30" Height="30">
+                        <Rectangle.Fill>
+                            <ImageBrush Stretch="Fill" ImageSource="images/pause_green.png"></ImageBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
+                </ControlTemplate>
+            </Button.Template>
+        </Button>
+        <Button Name="Clear_Animate" Canvas.Right="280" Canvas.Bottom="5" Panel.ZIndex="1000" Width="30" Height="30" Click="Clear_Animate_Click">
+            <Button.Template>
+                <ControlTemplate>
+                    <Rectangle Width="25" Height="25">
+                        <Rectangle.Fill>
+                            <ImageBrush Stretch="Fill" ImageSource="images/stop_red.png"></ImageBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
+                </ControlTemplate>
+            </Button.Template>
+        </Button>
+        <!--<TextBlock Text="{Binding Value, ElementName=PlaybackSlider, StringFormat={}{0:0}}" VerticalAlignment="Center"
+                   Canvas.Right="150" Canvas.Top="210" Width="100" Height="20"/>-->
     </Canvas>
 </Window>
