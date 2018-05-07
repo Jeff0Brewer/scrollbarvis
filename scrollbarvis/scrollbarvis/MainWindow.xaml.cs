@@ -230,6 +230,8 @@ namespace scrollbarvis
             private StringBuilder csv;
             private String filepath;
             private bool recording;
+            private int sessionnumber;
+            private int recordnumber;
 
             private Rectangle button;
             private SolidColorBrush recordcolor, pausecolor;
@@ -239,13 +241,14 @@ namespace scrollbarvis
             {
                 csv = new StringBuilder();
                 recording = false;
+                sessionnumber = 0;
+                recordnumber = 0;
 
-                int offset = 0;
-                filepath = pathstart + offset.ToString() + ".csv";
+                filepath = pathstart + sessionnumber.ToString() + "_" + recordnumber.ToString() + ".csv";
                 while (File.Exists(filepath))
                 {
-                    offset++;
-                    filepath = pathstart + offset.ToString() + ".csv";
+                    sessionnumber++;
+                    filepath = pathstart + sessionnumber.ToString() + "_" + recordnumber.ToString() + ".csv";
                 }
 
                 recordcolor = new SolidColorBrush(Colors.Red);
@@ -282,8 +285,17 @@ namespace scrollbarvis
             private void buttonclick(object sender, MouseButtonEventArgs e)
             {
                 recording = !recording;
-                if (recording) button.Fill = recordcolor;
-                else button.Fill = pausecolor;
+                if (recording)
+                    button.Fill = recordcolor;
+                else
+                {
+                    button.Fill = pausecolor;
+                    save();
+
+                    recordnumber++;
+                    filepath = filepath.Substring(0, filepath.IndexOf("_") + 1) + recordnumber.ToString() + ".csv";
+                    csv = new StringBuilder();
+                }
             }
         }
 
