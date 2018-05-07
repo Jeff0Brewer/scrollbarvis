@@ -32,11 +32,26 @@ namespace scrollbarvis
         Scrollbar scrollbar;
         Recorder recorder;
 
+        Pointvis pointvis;
         Meanvis meanvis;
 
         String recordingpath = "gazerecordings/r";
 
-        String[] inputFile = { "gazerecordings/recording0.csv", "gazerecordings/recording1.csv", "gazerecordings/recording2.csv"};
+        String[] inputFile = { "gazerecordings/r0_0.csv",
+                               "gazerecordings/r0_1.csv",
+                               "gazerecordings/r0_2.csv",
+                               "gazerecordings/r0_3.csv",
+                               "gazerecordings/r0_4.csv",
+                               "gazerecordings/r0_5.csv",
+                               "gazerecordings/r0_6.csv",
+                               "gazerecordings/r0_7.csv",
+                               "gazerecordings/r0_8.csv",
+                               "gazerecordings/r0_9.csv",
+                               "gazerecordings/r0_10.csv",
+                               "gazerecordings/r0_11.csv",
+                               "gazerecordings/r0_12.csv",
+                               "gazerecordings/r0_13.csv",
+                               "gazerecordings/r0_14.csv",};
 
         /* playback */
         System.Windows.Threading.DispatcherTimer animateTimer;
@@ -104,6 +119,11 @@ namespace scrollbarvis
             scrollbar = new Scrollbar(15, screenheight, screenwidth, bg, blankbg, handle, canv, 1);
             recorder = new Recorder(20, 5, 100, canv, recordingpath);
 
+            Color[] colors = { Colors.Red, Colors.Green, Colors.Blue, Colors.Gray, Colors.HotPink,
+                               Colors.Indigo, Colors.Goldenrod, Colors.DarkKhaki, Colors.Cornsilk, Colors.Chocolate,
+                               Colors.Brown, Colors.Aquamarine, Colors.AliceBlue, Colors.DarkRed, Colors.DarkOliveGreen};
+
+            pointvis = new Pointvis(inputFile.Length, 35, colors, canv);
             meanvis = new Meanvis(inputFile.Length, 20, canv);
 
             eyeXHost = new EyeXHost();
@@ -315,8 +335,7 @@ namespace scrollbarvis
                 meandot = new Ellipse();
                 meandot.Width = 2 * r;
                 meandot.Height = 2 * r;
-                Canvas.SetLeft(meandot, -2 * r);
-                Canvas.SetTop(meandot, -2 * r);
+                meandot.Visibility = Visibility.Hidden;
                 meandot.Fill = new SolidColorBrush(Colors.Black);
                 canv.Children.Add(meandot);
 
@@ -342,6 +361,59 @@ namespace scrollbarvis
                     currpoints = 0;
                 }
             }
+
+            public void show() {
+                meandot.Visibility = Visibility.Visible;
+            }
+
+            public void hide() {
+                meandot.Visibility = Visibility.Hidden;
+            }
+        }
+
+        public class Pointvis {
+            private Ellipse[] ellipses;
+            private double radius;
+            private int numpoints;
+
+            private int currellipse;
+
+            public Pointvis(int np, double r, Color[] colors, Canvas canv){
+                ellipses = new Ellipse[np];
+
+                for (int i = 0; i < np; i++){
+                    ellipses[i] = new Ellipse();
+                    ellipses[i].Width = 2 * r;
+                    ellipses[i].Height = 2 * r;
+                    ellipses[i].Visibility = Visibility.Hidden;
+                    ellipses[i].StrokeThickness = 2.0;
+                    ellipses[i].Stroke = new SolidColorBrush(colors[i]);
+                    canv.Children.Add(ellipses[i]);
+                }
+
+                numpoints = np;
+                radius = r;
+
+                currellipse = 0;
+            }
+
+            public void addpoint(double x, double y) {
+                Canvas.SetLeft(ellipses[currellipse], x - radius);
+                Canvas.SetTop(ellipses[currellipse], y - radius);
+                currellipse = (currellipse + 1) % numpoints;
+            }
+
+            public void show() {
+                for (int i = 0; i < numpoints; i++) {
+                    ellipses[i].Visibility = Visibility.Visible;
+                }
+            }
+
+            public void hide() {
+                for (int i = 0; i < numpoints; i++) {
+                    ellipses[i].Visibility = Visibility.Hidden;
+                }
+            }
         }
 
         #region playback
@@ -359,7 +431,6 @@ namespace scrollbarvis
 
         private void startAnimate()
         {
-            initializeAnimate(numCoords[0]);
             coordNum = 0;
             animateTimer = new System.Windows.Threading.DispatcherTimer(System.Windows.Threading.DispatcherPriority.Render);
             animateTimer.Tick += animate_tick;
@@ -392,36 +463,11 @@ namespace scrollbarvis
                     break;
             }
         }
-        public void initializeAnimate(int numCoords)
-        {
-            ellipses = new Ellipse[xCoords.Length];
-            for (int i = 0; i < ellipses.Length; i++)
-            {
-                ellipses[i] = new Ellipse();
-                ellipses[i].Width = 70;
-                ellipses[i].Height = 70;
-                Panel.SetZIndex(ellipses[i], 100);
-                ellipses[i].Visibility = Visibility.Hidden;
-                ellipses[i].StrokeThickness = 2.0;
-                switch (i)
-                {
-                    case 0:
-                        ellipses[i].Stroke = new SolidColorBrush(System.Windows.Media.Colors.Blue);
-                        break;
-                    case 1:
-                        ellipses[i].Stroke = new SolidColorBrush(System.Windows.Media.Colors.Red);
-                        break;
-                    default:
-                        ellipses[i].Stroke = new SolidColorBrush(System.Windows.Media.Colors.Green);
-                        break;
-                }
-
-                canv.Children.Add(ellipses[i]);
-            }
-        }
 
         private void Animate_Click(object sender, RoutedEventArgs e)
         {
+            pointvis.show();
+            //meanvis.show();
             if (!isAnimating)
             {
                 // start
@@ -450,10 +496,8 @@ namespace scrollbarvis
 
         private void Clear_Animate_Click(object sender, RoutedEventArgs e)
         {
-            for (int i = 0; i < ellipses.Length; i++)
-            {
-                canv.Children.Remove(ellipses[i]);
-            }
+            pointvis.hide();
+            //meanvis.hide();
             isAnimating = false;
             PlaybackSlider.Value = 0;
             animateTimer.Stop();
@@ -465,15 +509,12 @@ namespace scrollbarvis
         {
             double y = -1 * this.scrollbar.bgTopPosition;
             int screenPositionTop = (int)(y < 0 ? 0 : y);
-            for (int i = 0; i < ellipses.Length; i++)
+            for (int i = 0; i < inputFile.Length; i++)
             {
                 if (coordNum < xCoords[i].Count && coordNum < yCoords[i].Count)
                 {
-                    Canvas.SetLeft(ellipses[i], xCoords[i][coordNum] - 25);
-                    Canvas.SetTop(ellipses[i], yCoords[i][coordNum] - 25 - screenPositionTop);
-                    ellipses[i].Visibility = Visibility.Visible;
-
-                    meanvis.addpoint(xCoords[i][coordNum], yCoords[i][coordNum] - screenPositionTop);
+                    pointvis.addpoint(xCoords[i][coordNum], yCoords[i][coordNum] - screenPositionTop);
+                    //meanvis.addpoint(xCoords[i][coordNum], yCoords[i][coordNum] - screenPositionTop);
                 }
             }
         }
