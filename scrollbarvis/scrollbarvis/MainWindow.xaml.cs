@@ -32,6 +32,8 @@ namespace scrollbarvis
         Scrollbar scrollbar;
         Recorder recorder;
 
+        Meanvis meanvis;
+
         String recordingpath = "gazerecordings/r";
 
         String[] inputFile = { "gazerecordings/recording0.csv", "gazerecordings/recording1.csv", "gazerecordings/recording2.csv"};
@@ -101,6 +103,8 @@ namespace scrollbarvis
 
             scrollbar = new Scrollbar(15, screenheight, screenwidth, bg, blankbg, handle, canv, 1);
             recorder = new Recorder(20, 5, 100, canv, recordingpath);
+
+            meanvis = new Meanvis(inputFile.Length, 20, canv);
 
             eyeXHost = new EyeXHost();
             eyeXHost.Start();
@@ -299,6 +303,47 @@ namespace scrollbarvis
             }
         }
 
+        public class Meanvis {
+            private Ellipse meandot;
+            private double radius;
+            private double numpoints;
+
+            private Point currmean;
+            private int currpoints;
+
+            public Meanvis(int np,  double r, Canvas canv) {
+                meandot = new Ellipse();
+                meandot.Width = 2 * r;
+                meandot.Height = 2 * r;
+                Canvas.SetLeft(meandot, -2 * r);
+                Canvas.SetTop(meandot, -2 * r);
+                meandot.Fill = new SolidColorBrush(Colors.Black);
+                canv.Children.Add(meandot);
+
+                numpoints = np;
+                radius = r;
+
+                currmean = new Point(0, 0);
+                currpoints = 0;
+            }
+
+            public void addpoint(double x, double y) {
+                currmean.X += x;
+                currmean.Y += y;
+                currpoints++;
+
+                if (currpoints == numpoints) {
+                    currmean.X /= numpoints;
+                    currmean.Y /= numpoints;
+
+                    Canvas.SetLeft(meandot, currmean.X - radius);
+                    Canvas.SetTop(meandot, currmean.Y - radius);
+                    currmean = new Point(0, 0);
+                    currpoints = 0;
+                }
+            }
+        }
+
         #region playback
         private void PlaybackSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
@@ -427,6 +472,8 @@ namespace scrollbarvis
                     Canvas.SetLeft(ellipses[i], xCoords[i][coordNum] - 25);
                     Canvas.SetTop(ellipses[i], yCoords[i][coordNum] - 25 - screenPositionTop);
                     ellipses[i].Visibility = Visibility.Visible;
+
+                    meanvis.addpoint(xCoords[i][coordNum], yCoords[i][coordNum] - screenPositionTop);
                 }
             }
         }
