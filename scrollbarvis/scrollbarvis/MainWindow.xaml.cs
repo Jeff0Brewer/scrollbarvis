@@ -26,6 +26,10 @@ namespace scrollbarvis
 
         List<int>[] xCoords, yCoords;
         int[] numCoords;
+
+        double smoothness = .8;
+        Point[] prevpoints;
+
         WriteableBitmap wb;
         List<byte[,,]> pixels3d;
 
@@ -64,7 +68,8 @@ namespace scrollbarvis
         {
             InitializeComponent();
 
-            #region
+            prevpoints = new Point[inputFile.Length];
+            
             xCoords = new List<int>[inputFile.Length];
             yCoords = new List<int>[inputFile.Length];
             numCoords = new int[inputFile.Length];
@@ -80,7 +85,6 @@ namespace scrollbarvis
                 //px = createScreenHeatmap(xCoords[c], yCoords[c], c);
                 //pixels3d.Add(px);
             }
-            #endregion
         }
 
         private void canvasloaded(object sender, RoutedEventArgs e)
@@ -513,8 +517,11 @@ namespace scrollbarvis
             {
                 if (coordNum < xCoords[i].Count && coordNum < yCoords[i].Count)
                 {
-                    pointvis.addpoint(xCoords[i][coordNum], yCoords[i][coordNum] - screenPositionTop);
-                    //meanvis.addpoint(xCoords[i][coordNum], yCoords[i][coordNum] - screenPositionTop);
+                    prevpoints[i].X = prevpoints[i].X * smoothness + xCoords[i][coordNum] * (1 - smoothness);
+                    prevpoints[i].Y = prevpoints[i].Y * smoothness + (yCoords[i][coordNum] - screenPositionTop) * (1 - smoothness);
+
+                    pointvis.addpoint(prevpoints[i].X, prevpoints[i].Y);
+                    //meanvis.addpoint(prevpoints[i].X, prevpoints[i].Y);
                 }
             }
         }
