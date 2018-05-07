@@ -299,6 +299,139 @@ namespace scrollbarvis
             }
         }
 
+        #region playback
+        private void PlaybackSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (isAnimating)
+            {
+                isAnimatingPaused = true;
+                coordNum = (int)(PlaybackSlider.Value / PlaybackSlider.Maximum * numCoords.Max());
+                isAnimatingPaused = false; // start playing again
+                AnimatePlay.Visibility = Visibility.Hidden;
+                AnimatePause.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void startAnimate()
+        {
+            initializeAnimate(numCoords[0]);
+            coordNum = 0;
+            animateTimer = new System.Windows.Threading.DispatcherTimer(System.Windows.Threading.DispatcherPriority.Render);
+            animateTimer.Tick += animate_tick;
+            animateTimer.Interval = new TimeSpan(0, 0, 0, 0, 30); //days,hrs,min,sec,ms
+            animateTimer.Start();
+        }
+
+        private void animate_tick(object sender, EventArgs e)
+        {
+            if (coordNum == numCoords[0])
+            {
+                isAnimating = false;
+                animateTimer.Stop();
+            }
+            if (!isAnimatingPaused)
+            {
+                animate(coordNum, 0);
+                coordNum++;
+                PlaybackSlider.Value = (int)((double)coordNum / numCoords.Max() * PlaybackSlider.Maximum); // update slider
+            }
+        }
+
+        private void animate(int coordNum, int type)
+        {
+            // For all students to display
+            switch (type)
+            {
+                default:
+                    drawNextCoordinate(coordNum);
+                    break;
+            }
+        }
+        public void initializeAnimate(int numCoords)
+        {
+            ellipses = new Ellipse[xCoords.Length];
+            for (int i = 0; i < ellipses.Length; i++)
+            {
+                ellipses[i] = new Ellipse();
+                ellipses[i].Width = 70;
+                ellipses[i].Height = 70;
+                Panel.SetZIndex(ellipses[i], 100);
+                ellipses[i].Visibility = Visibility.Hidden;
+                ellipses[i].StrokeThickness = 2.0;
+                switch (i)
+                {
+                    case 0:
+                        ellipses[i].Stroke = new SolidColorBrush(System.Windows.Media.Colors.Blue);
+                        break;
+                    case 1:
+                        ellipses[i].Stroke = new SolidColorBrush(System.Windows.Media.Colors.Red);
+                        break;
+                    default:
+                        ellipses[i].Stroke = new SolidColorBrush(System.Windows.Media.Colors.Green);
+                        break;
+                }
+
+                canv.Children.Add(ellipses[i]);
+            }
+        }
+
+        private void Animate_Click(object sender, RoutedEventArgs e)
+        {
+            if (!isAnimating)
+            {
+                // start
+                isAnimating = true;
+                isAnimatingPaused = false;
+                startAnimate();
+                AnimatePlay.Visibility = Visibility.Hidden;
+                AnimatePause.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                // pause/resume
+                isAnimatingPaused = !isAnimatingPaused;
+                if (AnimatePlay.Visibility == Visibility.Visible)
+                {
+                    AnimatePlay.Visibility = Visibility.Hidden;
+                    AnimatePause.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    AnimatePlay.Visibility = Visibility.Visible;
+                    AnimatePause.Visibility = Visibility.Hidden;
+                }
+            }
+        }
+
+        private void Clear_Animate_Click(object sender, RoutedEventArgs e)
+        {
+            for (int i = 0; i < ellipses.Length; i++)
+            {
+                canv.Children.Remove(ellipses[i]);
+            }
+            isAnimating = false;
+            PlaybackSlider.Value = 0;
+            animateTimer.Stop();
+            AnimatePlay.Visibility = Visibility.Visible;
+            AnimatePause.Visibility = Visibility.Hidden;
+        }
+
+        public void drawNextCoordinate(int coordNum)
+        {
+            double y = -1 * this.scrollbar.bgTopPosition;
+            int screenPositionTop = (int)(y < 0 ? 0 : y);
+            for (int i = 0; i < ellipses.Length; i++)
+            {
+                if (coordNum < xCoords[i].Count && coordNum < yCoords[i].Count)
+                {
+                    Canvas.SetLeft(ellipses[i], xCoords[i][coordNum] - 25);
+                    Canvas.SetTop(ellipses[i], yCoords[i][coordNum] - 25 - screenPositionTop);
+                    ellipses[i].Visibility = Visibility.Visible;
+                }
+            }
+        }
+        #endregion
+
         #region
         //public class Scrollbar {
         //    private Rectangle handle, blankbg, picturebg, hover, bg;
@@ -866,138 +999,6 @@ namespace scrollbarvis
         //    }
         //    return pixels;
         //}
-        #endregion
-
-        #region playback
-        private void PlaybackSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            if (isAnimating)
-            {
-                isAnimatingPaused = true;
-                coordNum = (int)(PlaybackSlider.Value / PlaybackSlider.Maximum * numCoords.Max());
-                isAnimatingPaused = false; // start playing again
-                AnimatePlay.Visibility = Visibility.Hidden;
-                AnimatePause.Visibility = Visibility.Visible;
-            }
-        }
-
-        private void startAnimate()
-        {
-            initializeAnimate(numCoords[0]);
-            coordNum = 0;
-            animateTimer = new System.Windows.Threading.DispatcherTimer(System.Windows.Threading.DispatcherPriority.Render);
-            animateTimer.Tick += animate_tick;
-            animateTimer.Interval = new TimeSpan(0, 0, 0, 0, 30); //days,hrs,min,sec,ms
-            animateTimer.Start();
-        }
-
-        private void animate_tick(object sender, EventArgs e)
-        {
-            if (coordNum == numCoords[0])
-            {
-                isAnimating = false;
-                animateTimer.Stop();
-            }
-            if (!isAnimatingPaused)
-            {
-                animate(coordNum, 0);
-                coordNum++;
-                PlaybackSlider.Value = (int) ((double)coordNum / numCoords.Max() * PlaybackSlider.Maximum); // update slider
-            }
-        }
-
-        private void animate(int coordNum, int type)
-        {
-            // For all students to display
-            switch (type)
-            {
-                default:
-                    drawNextCoordinate(coordNum);
-                    break;
-            }
-        }
-        public void initializeAnimate(int numCoords)
-        {
-            ellipses = new Ellipse[xCoords.Length];
-            for (int i = 0; i < ellipses.Length; i++)
-            {
-                ellipses[i] = new Ellipse();
-                ellipses[i].Width = 70;
-                ellipses[i].Height = 70;
-                Panel.SetZIndex(ellipses[i], 100);
-                ellipses[i].Visibility = Visibility.Hidden;
-                ellipses[i].StrokeThickness = 2.0;
-                switch (i)
-                {
-                    case 0:
-                        ellipses[i].Stroke = new SolidColorBrush(System.Windows.Media.Colors.Blue);
-                        break;
-                    case 1:
-                        ellipses[i].Stroke = new SolidColorBrush(System.Windows.Media.Colors.Red);
-                        break;
-                    default:
-                        ellipses[i].Stroke = new SolidColorBrush(System.Windows.Media.Colors.Green);
-                        break;
-                }
-
-                canv.Children.Add(ellipses[i]);
-            }
-        }
-
-        private void Animate_Click(object sender, RoutedEventArgs e)
-        {
-            if (!isAnimating)
-            {
-                // start
-                isAnimating = true;
-                isAnimatingPaused = false;
-                startAnimate();
-                AnimatePlay.Visibility = Visibility.Hidden;
-                AnimatePause.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                // pause/resume
-                isAnimatingPaused = !isAnimatingPaused;
-                if (AnimatePlay.Visibility == Visibility.Visible)
-                {
-                    AnimatePlay.Visibility = Visibility.Hidden;
-                    AnimatePause.Visibility = Visibility.Visible;
-                } else
-                {
-                    AnimatePlay.Visibility = Visibility.Visible;
-                    AnimatePause.Visibility = Visibility.Hidden;
-                }
-            }
-        }
-
-        private void Clear_Animate_Click(object sender, RoutedEventArgs e)
-        {
-            for (int i = 0; i < ellipses.Length; i++)
-            {
-                canv.Children.Remove(ellipses[i]);
-            }
-            isAnimating = false;
-            PlaybackSlider.Value = 0;
-            animateTimer.Stop();
-            AnimatePlay.Visibility = Visibility.Visible;
-            AnimatePause.Visibility = Visibility.Hidden;
-        }
-
-        public void drawNextCoordinate(int coordNum)
-        {
-            double y = -1 * this.scrollbar.bgTopPosition;
-            int screenPositionTop = (int)(y < 0 ? 0 : y);
-            for (int i = 0; i < ellipses.Length; i++)
-            {
-                if (coordNum < xCoords[i].Count && coordNum < yCoords[i].Count)
-                {
-                    Canvas.SetLeft(ellipses[i], xCoords[i][coordNum] - 25);
-                    Canvas.SetTop(ellipses[i], yCoords[i][coordNum] - 25 - screenPositionTop);
-                    ellipses[i].Visibility = Visibility.Visible;
-                }
-            }
-        }
         #endregion
     }
 }
