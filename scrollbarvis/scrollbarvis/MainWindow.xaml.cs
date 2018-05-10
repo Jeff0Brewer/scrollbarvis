@@ -330,10 +330,10 @@ namespace scrollbarvis
         public class Meanvis {
             private Ellipse meandot;
             private double radius;
-            private double numpoints;
+            private int numpoints;
 
             private Point currmean;
-            private int currpoints;
+            private double currpoints;
 
             public Meanvis(int np,  double r, Canvas canv) {
                 meandot = new Ellipse();
@@ -354,16 +354,16 @@ namespace scrollbarvis
                 currmean.X += x;
                 currmean.Y += y;
                 currpoints++;
+            }
 
-                if (currpoints == numpoints) {
-                    currmean.X /= numpoints;
-                    currmean.Y /= numpoints;
+            public void update() {
+                currmean.X /= currpoints;
+                currmean.Y /= currpoints;
 
-                    Canvas.SetLeft(meandot, currmean.X - radius);
-                    Canvas.SetTop(meandot, currmean.Y - radius);
-                    currmean = new Point(0, 0);
-                    currpoints = 0;
-                }
+                Canvas.SetLeft(meandot, currmean.X - radius);
+                Canvas.SetTop(meandot, currmean.Y - radius);
+                currmean = new Point(0, 0);
+                currpoints = 0;
             }
 
             public void show() {
@@ -380,7 +380,7 @@ namespace scrollbarvis
             private double radius;
             private int numpoints;
 
-            private int currellipse;
+            private Point[] currset;
 
             public Pointvis(int np, double r, Color[] colors, Canvas canv){
                 ellipses = new Ellipse[np];
@@ -398,13 +398,21 @@ namespace scrollbarvis
                 numpoints = np;
                 radius = r;
 
-                currellipse = 0;
+                currset = new Point[np];
+                for (int i = 0; i < np; i++)
+                    currset[i] = new Point(-2*radius, -2*radius);
             }
 
-            public void addpoint(double x, double y) {
-                Canvas.SetLeft(ellipses[currellipse], x - radius);
-                Canvas.SetTop(ellipses[currellipse], y - radius);
-                currellipse = (currellipse + 1) % numpoints;
+            public void addpoint(int ind, double x, double y) {
+                currset[ind] = new Point(x, y);
+            }
+
+            public void update() {
+                for (int i = 0; i < currset.Length; i++) {
+                    Canvas.SetLeft(ellipses[i], currset[i].X);
+                    Canvas.SetTop(ellipses[i], currset[i].Y);
+                    currset[i] = new Point(-2*radius, -2*radius);
+                }
             }
 
             public void show() {
@@ -471,7 +479,7 @@ namespace scrollbarvis
         private void Animate_Click(object sender, RoutedEventArgs e)
         {
             pointvis.show();
-            //meanvis.show();
+            meanvis.show();
             if (!isAnimating)
             {
                 // start
@@ -501,7 +509,7 @@ namespace scrollbarvis
         private void Clear_Animate_Click(object sender, RoutedEventArgs e)
         {
             pointvis.hide();
-            //meanvis.hide();
+            meanvis.hide();
             isAnimating = false;
             PlaybackSlider.Value = 0;
             animateTimer.Stop();
@@ -520,10 +528,12 @@ namespace scrollbarvis
                     prevpoints[i].X = prevpoints[i].X * smoothness + xCoords[i][coordNum] * (1 - smoothness);
                     prevpoints[i].Y = prevpoints[i].Y * smoothness + (yCoords[i][coordNum] - screenPositionTop) * (1 - smoothness);
 
-                    pointvis.addpoint(prevpoints[i].X, prevpoints[i].Y);
-                    //meanvis.addpoint(prevpoints[i].X, prevpoints[i].Y);
+                    pointvis.addpoint(i, prevpoints[i].X, prevpoints[i].Y);
+                    meanvis.addpoint(prevpoints[i].X, prevpoints[i].Y);
                 }
             }
+            pointvis.update();
+            meanvis.update();
         }
         #endregion
 
