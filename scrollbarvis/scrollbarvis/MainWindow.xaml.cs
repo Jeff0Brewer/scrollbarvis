@@ -41,6 +41,8 @@ namespace scrollbarvis
 
         String recordingpath = "gazerecordings/r";
 
+        System.Windows.Threading.DispatcherTimer dispatcherTimer;
+
         String[] inputFile = { "gazerecordings/r0_0.csv",
                                "gazerecordings/r0_1.csv",
                                "gazerecordings/r0_2.csv",
@@ -135,7 +137,7 @@ namespace scrollbarvis
             var gazeData = eyeXHost.CreateGazePointDataStream(GazePointDataMode.LightlyFiltered);
             gazeData.Next += newGazePoint;
 
-            System.Windows.Threading.DispatcherTimer dispatcherTimer = new System.Windows.Threading.DispatcherTimer(System.Windows.Threading.DispatcherPriority.Render);
+            dispatcherTimer = new System.Windows.Threading.DispatcherTimer(System.Windows.Threading.DispatcherPriority.Render);
             dispatcherTimer.Tick += new EventHandler(update);
             dispatcherTimer.Interval = new TimeSpan(0, 0, 0, 0, 10);
             dispatcherTimer.Start();
@@ -1105,5 +1107,15 @@ namespace scrollbarvis
         //    return pixels;
         //}
         #endregion
+
+
+        private void HeatmapViz_Button_Click(object sender, RoutedEventArgs e)
+        {
+            Window1 window1 = new Window1();
+            isAnimating = false;
+            if (dispatcherTimer!=null) dispatcherTimer.Stop();
+            window1.Show();
+            this.Close();
+        }
     }
 }

@@ -34,3 +34,5 @@ C:\Users\Master\Documents\GitHub\scrollbarvis\scrollbarvis\scrollbarvis\obj\Debu
 C:\Users\Master\Documents\GitHub\scrollbarvis\scrollbarvis\scrollbarvis\obj\Debug\scrollbarvis.csproj.GenerateResource.Cache
 C:\Users\Master\Documents\GitHub\scrollbarvis\scrollbarvis\scrollbarvis\obj\Debug\scrollbarvis.exe
 C:\Users\Master\Documents\GitHub\scrollbarvis\scrollbarvis\scrollbarvis\obj\Debug\scrollbarvis.pdb
+C:\Users\Master\Documents\GitHub\scrollbarvis\scrollbarvis\scrollbarvis\obj\Debug\Window1.g.cs
+C:\Users\Master\Documents\GitHub\scrollbarvis\scrollbarvis\scrollbarvis\obj\Debug\Window1.baml

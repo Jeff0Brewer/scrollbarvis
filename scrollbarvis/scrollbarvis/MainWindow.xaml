@@ -53,7 +53,6 @@
                 </ControlTemplate>
             </Button.Template>
         </Button>
-        <!--<TextBlock Text="{Binding Value, ElementName=PlaybackSlider, StringFormat={}{0:0}}" VerticalAlignment="Center"
-                   Canvas.Right="150" Canvas.Top="210" Width="100" Height="20"/>-->
+        <Button Name="HeatmapViz_Button" Canvas.Left="10" Canvas.Bottom="10" Panel.ZIndex="1000" Width="50" Height="30" Click="HeatmapViz_Button_Click"></Button>
     </Canvas>
 </Window>
