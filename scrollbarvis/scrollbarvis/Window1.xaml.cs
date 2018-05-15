@@ -35,10 +35,10 @@ namespace scrollbarvis
 
         Scrollbar scrollbar;
         Recorder recorder;
-
-        Color[] allColors = { Colors.Red, Colors.Green, Colors.Blue, Colors.Gray, Colors.HotPink,
-                               Colors.Indigo, Colors.Goldenrod, Colors.DarkKhaki, Colors.Cornsilk, Colors.Chocolate,
-                               Colors.Brown, Colors.Aquamarine, Colors.AliceBlue, Colors.DarkRed, Colors.DarkOliveGreen};
+        System.Windows.Threading.DispatcherTimer dispatcherTimer;
+        Color[] allColors = { Colors.Red, Colors.DarkOrange, Colors.Gold, Colors.Green, Colors.Teal,
+                               Colors.Blue, Colors.MediumAquamarine, Colors.Indigo, Colors.MediumPurple, Colors.Coral,
+                               Colors.DeepPink, Colors.Chocolate, Colors.DarkOliveGreen, Colors.Magenta, Colors.YellowGreen};
 
         String recordingpath = "gazerecordings/r";
 
@@ -47,7 +47,7 @@ namespace scrollbarvis
                                "gazerecordings/r0_2.csv",
                                "gazerecordings/r0_3.csv",
                                "gazerecordings/r0_4.csv",
-                               "gazerecordings/r0_5.csv",/*
+                               "gazerecordings/r0_5.csv",
                                "gazerecordings/r0_6.csv",
                                "gazerecordings/r0_7.csv",
                                "gazerecordings/r0_8.csv",
@@ -56,7 +56,7 @@ namespace scrollbarvis
                                "gazerecordings/r0_11.csv",
                                "gazerecordings/r0_12.csv",
                                "gazerecordings/r0_13.csv",
-                               "gazerecordings/r0_14.csv",*/};
+                               "gazerecordings/r0_14.csv",};
 
         public Window1()
         {
@@ -90,9 +90,9 @@ namespace scrollbarvis
 
             #region 
             List<byte[,]> colors = new List<byte[,]>(3);
+            colors.Add(new byte[,] { { 0, 0, 255 } });
             colors.Add(new byte[,] { { 255, 0, 0 } });
             colors.Add(new byte[,] { { 0, 255, 0 } });
-            colors.Add(new byte[,] { { 0, 0, 255 } });
 
             ImageBrush[] verticalheatmaps = new ImageBrush[inputFile.Length];
             List<double> freqs = new List<double>(inputFile.Length);
@@ -111,7 +111,7 @@ namespace scrollbarvis
             }
             #endregion
 
-            scrollbar = new Scrollbar(15, 150, screenheight, screenwidth, 0.9, 100, bg, blankbg, handle, verticalheatmaps, freqs, canv, 1, wb, heatmap, pixels3d);
+            scrollbar = new Scrollbar(15, 150, screenheight, screenwidth, 0.9, 100, bg, blankbg, handle, verticalheatmaps, freqs, canv, 1, wb, heatmap, pixels3d, allColors);
             recorder = new Recorder(20, 5, 100, canv, recordingpath);
 
             eyeXHost = new EyeXHost();
@@ -119,7 +119,7 @@ namespace scrollbarvis
             var gazeData = eyeXHost.CreateGazePointDataStream(GazePointDataMode.LightlyFiltered);
             gazeData.Next += newGazePoint;
 
-            System.Windows.Threading.DispatcherTimer dispatcherTimer = new System.Windows.Threading.DispatcherTimer(System.Windows.Threading.DispatcherPriority.Render);
+            dispatcherTimer = new System.Windows.Threading.DispatcherTimer(System.Windows.Threading.DispatcherPriority.Render);
             dispatcherTimer.Tick += new EventHandler(update);
             dispatcherTimer.Interval = new TimeSpan(0, 0, 0, 0, 10);
             dispatcherTimer.Start();
@@ -142,6 +142,8 @@ namespace scrollbarvis
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            if (dispatcherTimer != null) dispatcherTimer.Stop();
+            eyeXHost.Dispose();
             recorder.save();
         }
 
@@ -237,14 +239,10 @@ namespace scrollbarvis
             Button[] heatmapButtons;
             bool[] heatmapShown;
             double bgTopPosition = 0;
-
-            Color[] allColors = { Colors.Red, Colors.Green, Colors.Blue, Colors.Gray, Colors.HotPink,
-                               Colors.Indigo, Colors.Goldenrod, Colors.DarkKhaki, Colors.Cornsilk, Colors.Chocolate,
-                               Colors.Brown, Colors.Aquamarine, Colors.AliceBlue, Colors.DarkRed, Colors.DarkOliveGreen};
-
+            
             public Scrollbar(double collapsedwidth, double expandedwidth, double screenheight, double screenwidth, double smoothness, int duration,
                              Rectangle background, SolidColorBrush blank, SolidColorBrush hand, ImageBrush[] vertheatmaps, List<double> vertscale, Canvas canv, int zindex,
-                             WriteableBitmap writeableBitmap, Image heatmapImage, List<byte[,,]> heatmapPixels)
+                             WriteableBitmap writeableBitmap, Image heatmapImage, List<byte[,,]> heatmapPixels, Color[] allColors)
             {
                 inwidth = collapsedwidth;
                 outwidth = expandedwidth;
@@ -336,11 +334,11 @@ namespace scrollbarvis
                 for (int i = 0; i < pixels.Count; i++)
                 {
                     heatmapButtons[i] = new Button();
-                    heatmapButtons[i].Height = 30;
+                    heatmapButtons[i].Height = 25;
                     heatmapButtons[i].Width = 50;
                     heatmapButtons[i].Name = "H_" + i.ToString();
                     canv.Children.Add(heatmapButtons[i]);
-                    Canvas.SetTop(heatmapButtons[i], 10 + 50 * i);
+                    Canvas.SetTop(heatmapButtons[i], 10 + 30 * i);
                     Canvas.SetRight(heatmapButtons[i], outwidth + 10);
                     Panel.SetZIndex(heatmapButtons[i], 100);
                     heatmapButtons[i].Click += new RoutedEventHandler(HeatmapButton_Click);
@@ -356,7 +354,7 @@ namespace scrollbarvis
             private void HeatmapButton_Click(object sender, EventArgs e)
             {
                 Button thisButton = sender as Button;
-                int x = Int32.Parse((thisButton.Name).Substring(2,1));
+                int x = Int32.Parse((thisButton.Name).Substring(2));
                 heatmapButtonHelper(x);
             }
             /*
@@ -495,6 +493,7 @@ namespace scrollbarvis
                         double totalOpacity = 0.0001;
                         double maxOpacity = 0;
                         double opacity;
+                        double b = 0; double g = 0; double r = 0;
                         for (int h = 0; h < heatmapShown.Length; h++)
                         {
                             if (heatmapShown[h])
@@ -502,24 +501,18 @@ namespace scrollbarvis
                                 opacity = pixels[h][col, row, 3];
                                 totalOpacity += pixels[h][col, row, 3];
                                 if (opacity > maxOpacity) maxOpacity = opacity;
+                                if (opacity > 0)
+                                {
+                                    b = (b * (totalOpacity - opacity) + pixels[h][col, row, 0] * opacity) / totalOpacity;
+                                    g = (g * (totalOpacity - opacity) + pixels[h][col, row, 1] * opacity) / totalOpacity;
+                                    r = (r * (totalOpacity - opacity) + pixels[h][col, row, 2] * opacity) / totalOpacity;
+                                }
                             }
                         }
-                        for (int i = 0; i < 4; i++)
-                        {
-                            if (i == 3)
-                            {
-                                pixels1d[index] = (byte)maxOpacity;
-                            }
-                            else if (i < heatmapShown.Length && heatmapShown[i])
-                            {
-                                pixels1d[index] = (byte)(255 * pixels[i][col, row, 3] / totalOpacity);
-                            }
-                            else
-                            {
-                                pixels1d[index] = 0;
-                            }
-                            index++;
-                        }
+                        pixels1d[index++] = (byte)b;
+                        pixels1d[index++] = (byte)g;
+                        pixels1d[index++] = (byte)r;
+                        pixels1d[index++] = (byte)maxOpacity;
                     }
                 }
                 // Update writeable bitmap
@@ -722,11 +715,9 @@ namespace scrollbarvis
             int totalWidth = (int)bg.Width;
             int totalHeight = (int)bg.Height;
             int x, y;
-            double distanceFromCenter, currA, b, g, r, a, secondColor;
+            double distanceFromCenter, currA, a;
             int maxDistance = 80;
-            double maxOpacity = 240;
-            double maxSecondColor = 60;
-            double mainColor = 255;
+            double maxOpacity = 220;
 
             wb = new WriteableBitmap(totalWidth, totalHeight, 96, 96, PixelFormats.Bgra32, null);
             byte[,,] pixels = new byte[totalWidth, totalHeight, 4];
@@ -743,38 +734,13 @@ namespace scrollbarvis
                         if (distanceFromCenter <= (double)maxDistance)
                         {
                             currA = pixels[j, k, 3];
-                            // distanceRatio = distanceFromCenter / maxDistance;
-
                             a = currA + (1 - currA / maxOpacity) * 90 * Math.Pow(0.965, distanceFromCenter); // EXPONENTIAL DECAY
-                            //a = currA + 5 * (1 - currA/255) * (1 - distanceRatio); // Add less opacity to current value if farther from gaze coordinate
                             a = (a > maxOpacity ? maxOpacity : a);
 
                             Color currColor = allColors[index];
-
-                            mainColor = 255;
-                            secondColor = maxSecondColor * Math.Pow((1 - a / maxOpacity), 2);
-                            secondColor = (secondColor > maxSecondColor) ? maxSecondColor : secondColor;
-                            switch (index)
-                            {
-                                case 0: // Blue
-                                    b = mainColor;
-                                    g = secondColor;
-                                    r = secondColor;
-                                    break;
-                                case 1:  // Green
-                                    g = mainColor;
-                                    r = secondColor;
-                                    b = secondColor;
-                                    break;
-                                default: // Red
-                                    r = mainColor;
-                                    b = secondColor;
-                                    g = secondColor;
-                                    break;
-                            }
-                            pixels[j, k, 0] = (byte)b;
-                            pixels[j, k, 1] = (byte)g;
-                            pixels[j, k, 2] = (byte)r;
+                            pixels[j, k, 0] = currColor.B;
+                            pixels[j, k, 1] = currColor.G;
+                            pixels[j, k, 2] = currColor.R;
                             pixels[j, k, 3] = (byte)a;
                         }
                     }

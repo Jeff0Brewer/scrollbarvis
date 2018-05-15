@@ -49,6 +49,5 @@ C:\Users\Master\Documents\GitHub\scrollbarvis\scrollbarvis\EyeXFramework\bin\Deb
 C:\Users\Master\Documents\GitHub\scrollbarvis\scrollbarvis\EyeXFramework\bin\Debug\EyeXFramework.pdb
 C:\Users\Master\Documents\GitHub\scrollbarvis\scrollbarvis\EyeXFramework\bin\Debug\Tobii.EyeX.Client.Net20.dll
 C:\Users\Master\Documents\GitHub\scrollbarvis\scrollbarvis\EyeXFramework\bin\Debug\Tobii.EyeX.Client.Net20.xml
-C:\Users\Master\Documents\GitHub\scrollbarvis\scrollbarvis\EyeXFramework\obj\Debug\EyeXFramework.csprojResolveAssemblyReference.cache
 C:\Users\Master\Documents\GitHub\scrollbarvis\scrollbarvis\EyeXFramework\obj\Debug\EyeXFramework.dll
 C:\Users\Master\Documents\GitHub\scrollbarvis\scrollbarvis\EyeXFramework\obj\Debug\EyeXFramework.pdb
