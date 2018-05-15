@@ -14,7 +14,6 @@
                 <ImageBrush Stretch="Fill" ImageSource="TaskImage.jpg"></ImageBrush>
             </Rectangle.Fill>
         </Rectangle>
-        <Image Name="heatmap" Width="1501" Height="4330" Visibility="Hidden"></Image>
         <TextBlock Name="test" Canvas.Left="0" Canvas.Top="0" Text="" Visibility="Hidden"></TextBlock>
         
         <Slider Name="PlaybackSlider" Canvas.Right="10" Canvas.Bottom="0" Panel.ZIndex="1000" Minimum="0" Maximum="100"
@@ -53,7 +52,10 @@
                 </ControlTemplate>
             </Button.Template>
         </Button>
-        <!--<TextBlock Text="{Binding Value, ElementName=PlaybackSlider, StringFormat={}{0:0}}" VerticalAlignment="Center"
-                   Canvas.Right="150" Canvas.Top="210" Width="100" Height="20"/>-->
+        <Button Name="HeatmapViz_Button" Canvas.Left="10" Canvas.Bottom="10" Panel.ZIndex="1000" Width="50" Height="30" Click="HeatmapViz_Button_Click">
+            <Button.Content>
+                <TextBlock Text="Heatmap"></TextBlock>
+            </Button.Content>
+        </Button>
     </Canvas>
 </Window>

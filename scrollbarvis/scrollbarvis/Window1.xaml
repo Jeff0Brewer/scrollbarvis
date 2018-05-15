@@ -1,0 +1,20 @@
+﻿<Window x:Class="scrollbarvis.Window1"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:scrollbarvis"
+        mc:Ignorable="d"
+        Title="Window" WindowState="Maximized"
+        Closing="Window_Closing">
+    <Window.Resources></Window.Resources>
+    <Canvas Name="canv" Loaded="canvasloaded">
+        <Rectangle Name="bg" Width="1501" Height="4330" Canvas.Top="0">
+            <Rectangle.Fill>
+                <ImageBrush Stretch="Fill" ImageSource="TaskImage.jpg"></ImageBrush>
+            </Rectangle.Fill>
+        </Rectangle>
+        <Image Name="heatmap" Width="1501" Height="4330" Visibility="Hidden"></Image>
+        <TextBlock Name="test" Canvas.Left="0" Canvas.Top="0" Text="" Visibility="Hidden"></TextBlock>
+    </Canvas>
+</Window>
