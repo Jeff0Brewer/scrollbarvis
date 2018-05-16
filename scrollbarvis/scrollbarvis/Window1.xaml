@@ -9,12 +9,55 @@
         Closing="Window_Closing">
     <Window.Resources></Window.Resources>
     <Canvas Name="canv" Loaded="canvasloaded">
-        <Rectangle Name="bg" Width="1501" Height="4330" Canvas.Top="0">
+        <Rectangle Name="bg" Width="1501" Height="3860" Canvas.Top="0">
             <Rectangle.Fill>
-                <ImageBrush Stretch="Fill" ImageSource="TaskImage.jpg"></ImageBrush>
+                <ImageBrush Stretch="UniformToFill" ImageSource="images/clouds.png"></ImageBrush>
             </Rectangle.Fill>
         </Rectangle>
-        <Image Name="heatmap" Width="1501" Height="4330" Visibility="Hidden"></Image>
-        <TextBlock Name="test" Canvas.Left="0" Canvas.Top="0" Text="" Visibility="Hidden"></TextBlock>
+        <Image Name="heatmap" Width="1501" Height="3860" Visibility="Hidden"></Image>
+        <Grid Panel.ZIndex="1100" Margin="10" Canvas.Right="200" Canvas.Top="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="100" />
+                <ColumnDefinition Width="30" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="30" />
+                <RowDefinition Height="30" />
+                <RowDefinition Height="30" />
+                <RowDefinition Height="30" />
+                <RowDefinition Height="30" />
+                <RowDefinition Height="30" />
+                <RowDefinition Height="30" />
+                <RowDefinition Height="30" />
+                <RowDefinition Height="30" />
+                <RowDefinition Height="30" />
+                <RowDefinition Height="30" />
+                <RowDefinition Height="30" />
+            </Grid.RowDefinitions>
+            <Label>Number 1-10:</Label>
+            <Label Grid.Row="1">Altocumulus:</Label>
+            <TextBox Name="Answer1" Grid.Row="1" Grid.Column="1" Margin="0,0,0,10" />
+            <Label Grid.Row="2">Altostratus:</Label>
+            <TextBox Name="Answer2" Grid.Row="2" Grid.Column="1" Margin="0,0,0,10" />
+            <Label Grid.Row="3">Cirrostratus:</Label>
+            <TextBox Name="Answer3" Grid.Row="3" Grid.Column="1" Margin="0,0,0,10" />
+            <Label Grid.Row="4">Cirrocumulus:</Label>
+            <TextBox Name="Answer4" Grid.Row="4" Grid.Column="1" Margin="0,0,0,10" />
+            <Label Grid.Row="5">Cirrus:</Label>
+            <TextBox Name="Answer5" Grid.Row="5" Grid.Column="1" Margin="0,0,0,10" />
+            <Label Grid.Row="6">Cumulonimbus:</Label>
+            <TextBox Name="Answer6" Grid.Row="6" Grid.Column="1" Margin="0,0,0,10" />
+            <Label Grid.Row="7">Cumulus:</Label>
+            <TextBox Name="Answer7" Grid.Row="7" Grid.Column="1" Margin="0,0,0,10" />
+            <Label Grid.Row="8">Nimbostratus:</Label>
+            <TextBox Name="Answer8" Grid.Row="8" Grid.Column="1" Margin="0,0,0,10" />
+            <Label Grid.Row="9">Stratocumulus:</Label>
+            <TextBox Name="Answer9" Grid.Row="9" Grid.Column="1" Margin="0,0,0,10" />
+            <Label Grid.Row="10">Strauts:</Label>
+            <TextBox Name="Answer10" Grid.Row="10" Grid.Column="1" Margin="0,0,0,10" />
+            <Button Grid.Row="11" Name="Submit" Click="Submit_Click">
+                <TextBlock>Submit</TextBlock>
+            </Button>
+        </Grid>
     </Canvas>
 </Window>
