@@ -8,13 +8,19 @@
         Title="MainWindow" WindowState="Maximized"
         Closing="Window_Closing">
     <Window.Resources></Window.Resources>
+
     <Canvas Name="canv" Loaded="canvasloaded">
-        <Rectangle Name="bg" Width="1501" Height="4330" Canvas.Top="0">
+        <Rectangle Name="bg" Width="1366" Height="740"  Canvas.Top="0">
             <Rectangle.Fill>
-                <ImageBrush Stretch="Fill" ImageSource="TaskImage.jpg"></ImageBrush>
+                <VisualBrush>
+                    <VisualBrush.Visual>
+                        <MediaElement x:Name="cloudLecture" Source="../../images/clouds.mp4" LoadedBehavior="Manual" Stretch="Fill" Opacity="1.0"></MediaElement>
+                    </VisualBrush.Visual>
+                </VisualBrush> 
+                <!--<ImageBrush Stretch="Fill" ImageSource="TaskImage.jpg"></ImageBrush>-->
             </Rectangle.Fill>
         </Rectangle>
-        <TextBlock Name="test" Canvas.Left="0" Canvas.Top="0" Text="" Visibility="Hidden"></TextBlock>
+        <!--<TextBlock Name="test" Canvas.Left="0" Canvas.Top="0" Text="TEST" Width="100" Height="20" Visibility="Hidden"></TextBlock>-->
         
         <Slider Name="PlaybackSlider" Canvas.Right="10" Canvas.Bottom="0" Panel.ZIndex="1000" Minimum="0" Maximum="100"
                 TickFrequency="5" IsSnapToTickEnabled="True" ValueChanged="PlaybackSlider_ValueChanged"

@@ -165,11 +165,11 @@ namespace scrollbarvis
                 sessionnumber = 0;
                 recordnumber = 0;
 
-                filepath = pathstart + sessionnumber.ToString() + "_" + recordnumber.ToString() + ".csv";
+                filepath = pathstart + sessionnumber.ToString() + "_" + recordnumber.ToString() + "_test.csv";
                 while (File.Exists(filepath))
                 {
                     sessionnumber++;
-                    filepath = pathstart + sessionnumber.ToString() + "_" + recordnumber.ToString() + ".csv";
+                    filepath = pathstart + sessionnumber.ToString() + "_" + recordnumber.ToString() + "_test.csv";
                 }
 
                 recordcolor = new SolidColorBrush(Colors.Red);

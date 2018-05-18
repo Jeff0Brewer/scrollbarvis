@@ -120,7 +120,7 @@ namespace scrollbarvis
             #endregion
 
             scrollbar = new Scrollbar(15, screenheight, screenwidth, bg, blankbg, handle, canv, 1);
-            recorder = new Recorder(20, 5, 100, canv, recordingpath);
+            recorder = new Recorder(20, 5, 100, canv, recordingpath, cloudLecture);
 
             Color[] colors = { Colors.Red, Colors.DarkOrange, Colors.Gold, Colors.Green, Colors.Teal,
                                Colors.Blue, Colors.MediumAquamarine, Colors.Indigo, Colors.MediumPurple, Colors.Coral,
@@ -138,7 +138,6 @@ namespace scrollbarvis
             dispatcherTimer.Tick += new EventHandler(update);
             dispatcherTimer.Interval = new TimeSpan(0, 0, 0, 0, 10);
             dispatcherTimer.Start();
-
         }
 
         private void newGazePoint(object s, EyeXFramework.GazePointEventArgs e)
@@ -182,50 +181,51 @@ namespace scrollbarvis
 
                 int zind = z;
 
-                hover = new Rectangle();
-                hover.Width = 3000;
-                hover.Height = 3000;
-                Panel.SetZIndex(hover, zind);
-                hover.Fill = blank;
-                hover.Opacity = 0;
-                hover.PreviewMouseMove += mousemove;
-                hover.PreviewMouseUp += mouseup;
-                hover.PreviewMouseWheel += mousescroll;
-                canv.Children.Add(hover);
+                #region scroll setup
+                //hover = new Rectangle();
+                //hover.Width = 3000;
+                //hover.Height = 3000;
+                //Panel.SetZIndex(hover, zind);
+                //hover.Fill = blank;
+                //hover.Opacity = 0;
+                //hover.PreviewMouseMove += mousemove;
+                //hover.PreviewMouseUp += mouseup;
+                //hover.PreviewMouseWheel += mousescroll;
+                //canv.Children.Add(hover);
 
-                zind++;
+                //zind++;
 
-                blankbg = new Rectangle();
-                blankbg.Width = inwidth;
-                blankbg.Height = scrheight;
-                Canvas.SetRight(blankbg, 0);
-                Canvas.SetTop(blankbg, 0);
-                Panel.SetZIndex(blankbg, zind);
-                blankbg.Fill = blank;
-                blankbg.PreviewMouseDown += mousedown;
-                blankbg.PreviewMouseWheel += mousescroll;
-                canv.Children.Add(blankbg);
+                //blankbg = new Rectangle();
+                //blankbg.Width = inwidth;
+                //blankbg.Height = scrheight;
+                //Canvas.SetRight(blankbg, 0);
+                //Canvas.SetTop(blankbg, 0);
+                //Panel.SetZIndex(blankbg, zind);
+                //blankbg.Fill = blank;
+                //blankbg.PreviewMouseDown += mousedown;
+                //blankbg.PreviewMouseWheel += mousescroll;
+                //canv.Children.Add(blankbg);
 
-                zind++;
+                //zind++;
 
-                handle = new Rectangle();
-                handle.Width = inwidth;
-                handle.Height = scrheight / bg.Height * scrheight;
-                Canvas.SetRight(handle, 0);
-                Canvas.SetTop(handle, 0);
-                Panel.SetZIndex(handle, zind);
-                handle.Fill = hand;
-                handle.IsHitTestVisible = false;
-                canv.Children.Add(handle);
+                //handle = new Rectangle();
+                //handle.Width = inwidth;
+                //handle.Height = scrheight / bg.Height * scrheight;
+                //Canvas.SetRight(handle, 0);
+                //Canvas.SetTop(handle, 0);
+                //Panel.SetZIndex(handle, zind);
+                //handle.Fill = hand;
+                //handle.IsHitTestVisible = false;
+                //canv.Children.Add(handle);
 
-                topz = zind + 1;
+                //topz = zind + 1;
+                #endregion
             }
 
             private void mousedown(object sender, MouseButtonEventArgs e)
             {
                 Panel.SetZIndex(hover, topz);
             }
-
             private void mousemove(object sender, MouseEventArgs e)
             {
                 if (Panel.GetZIndex(hover) == topz)
@@ -242,7 +242,6 @@ namespace scrollbarvis
             {
                 Panel.SetZIndex(hover, z);
             }
-
             private void mousescroll(object sender, MouseWheelEventArgs e)
             {
                 double handley = Canvas.GetTop(handle) - e.Delta / (.001 * bg.Height);
@@ -265,13 +264,16 @@ namespace scrollbarvis
             private Rectangle button;
             private SolidColorBrush recordcolor, pausecolor;
 
+            private MediaElement myVideo;
 
-            public Recorder(int x, int y, int z, Canvas canv, String pathstart)
+
+            public Recorder(int x, int y, int z, Canvas canv, String pathstart, MediaElement video)
             {
                 csv = new StringBuilder();
                 recording = false;
                 sessionnumber = 0;
                 recordnumber = 0;
+                myVideo = video;
 
                 filepath = pathstart + sessionnumber.ToString() + "_" + recordnumber.ToString() + ".csv";
                 while (File.Exists(filepath))
@@ -281,7 +283,7 @@ namespace scrollbarvis
                 }
 
                 recordcolor = new SolidColorBrush(Colors.Red);
-                pausecolor = new SolidColorBrush(Colors.Black);
+                pausecolor = new SolidColorBrush(Colors.Gray);
 
                 button = new Rectangle();
                 button.Width = 30;
@@ -315,9 +317,13 @@ namespace scrollbarvis
             {
                 recording = !recording;
                 if (recording)
+                {
+                    myVideo.Play();
                     button.Fill = recordcolor;
+                }
                 else
                 {
+                    myVideo.Pause();
                     button.Fill = pausecolor;
                     save();
 
