@@ -43,26 +43,14 @@ namespace scrollbarvis
 
         System.Windows.Threading.DispatcherTimer dispatcherTimer;
 
-        String[] inputFile = { "gazerecordings/r0_0.csv",
-                               "gazerecordings/r0_1.csv",
-                               "gazerecordings/r0_2.csv",
-                               "gazerecordings/r0_3.csv",
-                               "gazerecordings/r0_4.csv",
-                               "gazerecordings/r0_5.csv",
-                               "gazerecordings/r0_6.csv",
-                               "gazerecordings/r0_7.csv",
-                               "gazerecordings/r0_8.csv",
-                               "gazerecordings/r0_9.csv",
-                               "gazerecordings/r0_10.csv",
-                               "gazerecordings/r0_11.csv",
-                               "gazerecordings/r0_12.csv",
-                               "gazerecordings/r0_13.csv",
-                               "gazerecordings/r0_14.csv",};
+        String[] inputFile = { "gazerecordings/r1_0.csv",
+                               "gazerecordings/r2_0.csv",
+                               "gazerecordings/r3_0.csv",
+                             };
 
         /* playback */
         System.Windows.Threading.DispatcherTimer animateTimer;
         int coordNum;
-        Ellipse[] ellipses;
         bool isAnimating = false;
         bool isAnimatingPaused = false;
 
@@ -182,43 +170,45 @@ namespace scrollbarvis
                 int zind = z;
 
                 #region scroll setup
-                //hover = new Rectangle();
-                //hover.Width = 3000;
-                //hover.Height = 3000;
-                //Panel.SetZIndex(hover, zind);
-                //hover.Fill = blank;
-                //hover.Opacity = 0;
-                //hover.PreviewMouseMove += mousemove;
-                //hover.PreviewMouseUp += mouseup;
-                //hover.PreviewMouseWheel += mousescroll;
-                //canv.Children.Add(hover);
+                /*
+                hover = new Rectangle();
+                hover.Width = 3000;
+                hover.Height = 3000;
+                Panel.SetZIndex(hover, zind);
+                hover.Fill = blank;
+                hover.Opacity = 0;
+                hover.PreviewMouseMove += mousemove;
+                hover.PreviewMouseUp += mouseup;
+                hover.PreviewMouseWheel += mousescroll;
+                canv.Children.Add(hover);
 
-                //zind++;
+                zind++;
 
-                //blankbg = new Rectangle();
-                //blankbg.Width = inwidth;
-                //blankbg.Height = scrheight;
-                //Canvas.SetRight(blankbg, 0);
-                //Canvas.SetTop(blankbg, 0);
-                //Panel.SetZIndex(blankbg, zind);
-                //blankbg.Fill = blank;
-                //blankbg.PreviewMouseDown += mousedown;
-                //blankbg.PreviewMouseWheel += mousescroll;
-                //canv.Children.Add(blankbg);
+                blankbg = new Rectangle();
+                blankbg.Width = inwidth;
+                blankbg.Height = scrheight;
+                Canvas.SetRight(blankbg, 0);
+                Canvas.SetTop(blankbg, 0);
+                Panel.SetZIndex(blankbg, zind);
+                blankbg.Fill = blank;
+                blankbg.PreviewMouseDown += mousedown;
+                blankbg.PreviewMouseWheel += mousescroll;
+                canv.Children.Add(blankbg);
 
-                //zind++;
+                zind++;
 
-                //handle = new Rectangle();
-                //handle.Width = inwidth;
-                //handle.Height = scrheight / bg.Height * scrheight;
-                //Canvas.SetRight(handle, 0);
-                //Canvas.SetTop(handle, 0);
-                //Panel.SetZIndex(handle, zind);
-                //handle.Fill = hand;
-                //handle.IsHitTestVisible = false;
-                //canv.Children.Add(handle);
+                handle = new Rectangle();
+                handle.Width = inwidth;
+                handle.Height = scrheight / bg.Height * scrheight;
+                Canvas.SetRight(handle, 0);
+                Canvas.SetTop(handle, 0);
+                Panel.SetZIndex(handle, zind);
+                handle.Fill = hand;
+                handle.IsHitTestVisible = false;
+                canv.Children.Add(handle);
 
-                //topz = zind + 1;
+                topz = zind + 1;
+                */
                 #endregion
             }
 
@@ -445,16 +435,20 @@ namespace scrollbarvis
                 isAnimatingPaused = false; // start playing again
                 AnimatePlay.Visibility = Visibility.Hidden;
                 AnimatePause.Visibility = Visibility.Visible;
+
+                //cloudLecture.Position = new TimeSpan(0, 0, 0, 0, coordNum * 10);
             }
         }
 
         private void startAnimate()
         {
-            coordNum = 0;
             animateTimer = new System.Windows.Threading.DispatcherTimer(System.Windows.Threading.DispatcherPriority.Render);
             animateTimer.Tick += animate_tick;
-            animateTimer.Interval = new TimeSpan(0, 0, 0, 0, 30); //days,hrs,min,sec,ms
+            animateTimer.Interval = new TimeSpan(0, 0, 0, 0, 10); //days,hrs,min,sec,ms
+            coordNum = 0;
+            animate(coordNum, 0);
             animateTimer.Start();
+            cloudLecture.Play();
         }
 
         private void stopAnimate()
@@ -466,10 +460,11 @@ namespace scrollbarvis
             if (animateTimer!=null) animateTimer.Stop();
             AnimatePlay.Visibility = Visibility.Visible;
             AnimatePause.Visibility = Visibility.Hidden;
+            cloudLecture.Stop();
         }
         private void animate_tick(object sender, EventArgs e)
         {
-            if (coordNum == numCoords[0])
+            if (coordNum == numCoords.Max())
             {
                 isAnimating = false;
                 animateTimer.Stop();
@@ -514,11 +509,13 @@ namespace scrollbarvis
                 {
                     AnimatePlay.Visibility = Visibility.Hidden;
                     AnimatePause.Visibility = Visibility.Visible;
+                    cloudLecture.Play();
                 }
                 else
                 {
                     AnimatePlay.Visibility = Visibility.Visible;
                     AnimatePause.Visibility = Visibility.Hidden;
+                    cloudLecture.Pause();
                 }
             }
         }
@@ -530,14 +527,14 @@ namespace scrollbarvis
 
         public void drawNextCoordinate(int coordNum)
         {
-            double y = -1 * this.scrollbar.bgTopPosition;
-            int screenPositionTop = (int)(y < 0 ? 0 : y);
+           // double y = -1 * this.scrollbar.bgTopPosition;
+           // int screenPositionTop = (int)(y < 0 ? 0 : y);
             for (int i = 0; i < inputFile.Length; i++)
             {
                 if (coordNum < xCoords[i].Count && coordNum < yCoords[i].Count)
                 {
                     prevpoints[i].X = prevpoints[i].X * smoothness + xCoords[i][coordNum] * (1 - smoothness);
-                    prevpoints[i].Y = prevpoints[i].Y * smoothness + (yCoords[i][coordNum] - screenPositionTop) * (1 - smoothness);
+                    prevpoints[i].Y = prevpoints[i].Y * smoothness + (yCoords[i][coordNum] /*- screenPositionTop*/) * (1 - smoothness);
 
                     pointvis.addpoint(i, prevpoints[i].X, prevpoints[i].Y);
                     meanvis.addpoint(prevpoints[i].X, prevpoints[i].Y);

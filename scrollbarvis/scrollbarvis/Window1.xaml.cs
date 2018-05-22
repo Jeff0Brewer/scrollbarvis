@@ -42,14 +42,10 @@ namespace scrollbarvis
 
         String recordingpath = "gazerecordings/r";
 
-        String[] inputFile = { "gazerecordings/r0_0.csv",
+        String[] inputFile = { "gazerecordings/r1_0_test.csv",
                                "gazerecordings/r0_1.csv",
                                "gazerecordings/r0_2.csv",
-                               "gazerecordings/r0_3.csv",
-                               "gazerecordings/r0_4.csv",
-                               "gazerecordings/r0_5.csv",
-                               "gazerecordings/r0_6.csv",
-                               "gazerecordings/r0_7.csv",};
+                             };
 
         public Window1()
         {
@@ -214,8 +210,16 @@ namespace scrollbarvis
                     save();
 
                     recordnumber++;
-                    filepath = filepath.Substring(0, filepath.IndexOf("_") + 1) + recordnumber.ToString() + ".csv";
+                    filepath = filepath.Substring(0, filepath.IndexOf("_") + 1) + recordnumber.ToString() + "_test.csv";
                     csv = new StringBuilder();
+                }
+            }
+            public void saveAnswers(string answerString)
+            {
+                string answerPath = filepath.Substring(0, filepath.IndexOf("_") + 1) + recordnumber.ToString() + "_answers.txt";
+                using (StreamWriter outputFile = new StreamWriter(answerPath, true))
+                {
+                    outputFile.WriteLine(answerString);
                 }
             }
         }
@@ -257,7 +261,8 @@ namespace scrollbarvis
                 heatmapbgs = new Rectangle[vertheatmaps.Length];
 
                 int zind = z;
-
+                #region scroll setup
+                /*
                 hover = new Rectangle();
                 hover.Width = 3000;
                 hover.Height = 3000;
@@ -321,6 +326,8 @@ namespace scrollbarvis
                 canv.Children.Add(handle);
 
                 topz = zind + 1;
+                */
+                #endregion
 
                 /* Screen Heatmap */
                 wb = writeableBitmap;
@@ -759,10 +766,10 @@ namespace scrollbarvis
 
         private void Submit_Click(object sender, RoutedEventArgs e)
         {
-            String answers = Answer1.Text + "_" + Answer2.Text + "_" + Answer3.Text + "_" + Answer4.Text 
-                + Answer5.Text + "_" + Answer6.Text + "_" + Answer7.Text + "_" + Answer8.Text + "_" 
-                + Answer9.Text + "_" + Answer10.Text;
-            /* Do something with answer */
+            String answers = Answer1.Text + "_" + Answer2.Text + "_" + Answer3.Text + "_" + Answer4.Text
+                + Answer5.Text + "_" + Answer6.Text + "_" + Answer7.Text + "_" + Answer8.Text;
+            this.recorder.saveAnswers(answers);
+            Submit.Background = new SolidColorBrush(Colors.Green);
         }
     }
 }

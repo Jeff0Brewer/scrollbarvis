@@ -58,9 +58,9 @@
                 </ControlTemplate>
             </Button.Template>
         </Button>
-        <Button Name="HeatmapViz_Button" Canvas.Left="10" Canvas.Bottom="10" Panel.ZIndex="1000" Width="50" Height="30" Click="HeatmapViz_Button_Click">
+        <Button Name="HeatmapViz_Button" Canvas.Left="10" Canvas.Bottom="10" Panel.ZIndex="1000" Width="60" Height="30" Click="HeatmapViz_Button_Click">
             <Button.Content>
-                <TextBlock Text="Heatmap"></TextBlock>
+                <TextBlock Text="Post-Test"></TextBlock>
             </Button.Content>
         </Button>
     </Canvas>
