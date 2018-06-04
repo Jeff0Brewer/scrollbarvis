@@ -88,9 +88,10 @@ namespace scrollbarvis
 
             ImageBrush[] verticalheatmaps = new ImageBrush[inputFile.Length];
             List<double> freqs = new List<double>(inputFile.Length);
+            /*
             if (inputFile.Length > 0)
             {
-                for (int c = 0; c < 3/*inputFile.Length*/; c++)
+                for (int c = 0; c < (inputFile.Length > 3 ? 3 : inputFile.Length); c++)
                 {
                     Tuple<int, WriteableBitmap> vert = createVerticalHeatmap(200, 2 * (int)screenheight, yCoords[c], numCoords[c], 4330, 2 * 13, colors[c], 55);
                     //Tuple<int, WriteableBitmap> vert = createMultiHeatmap(200, 2 * (int)screenheight, yCoords, numCoords, 4330, 2 * 13, colors, 55);
@@ -99,12 +100,14 @@ namespace scrollbarvis
                 }
 
                 double maxfreq = freqs.Max();
-                for (int c = 0; c < 3/*inputFile.Length*/; c++)
+                for (int c = 0; c < (inputFile.Length > 3 ? 3 : inputFile.Length); c++)
                 {
                     freqs[c] = freqs[c] / maxfreq;
                 }
-                #endregion
             }
+            */
+            #endregion
+
             scrollbar = new Scrollbar(15, 150, screenheight, screenwidth, 0.9, 100, bg, blankbg, handle, verticalheatmaps, freqs, canv, 1, wb, heatmap, pixels3d, allColors);
 
             recorder = new Recorder(20, 5, 100, canv, recordingpath);
@@ -766,7 +769,7 @@ namespace scrollbarvis
 
         private void Submit_Click(object sender, RoutedEventArgs e)
         {
-            String answers = Answer1.Text + "_" + Answer2.Text + "_" + Answer3.Text + "_" + Answer4.Text
+            String answers = Answer1.Text + "_" + Answer2.Text + "_" + Answer3.Text + "_" + Answer4.Text + "_"
                 + Answer5.Text + "_" + Answer6.Text + "_" + Answer7.Text + "_" + Answer8.Text;
             this.recorder.saveAnswers(answers);
             Submit.Background = new SolidColorBrush(Colors.Green);
