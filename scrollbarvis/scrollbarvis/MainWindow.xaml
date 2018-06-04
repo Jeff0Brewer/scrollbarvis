@@ -14,7 +14,7 @@
             <Rectangle.Fill>
                 <VisualBrush>
                     <VisualBrush.Visual>
-                        <MediaElement x:Name="cloudLecture" Source="../../images/clouds.mp4" LoadedBehavior="Manual" Stretch="Fill" Opacity="1.0"></MediaElement>
+                        <MediaElement x:Name="cloudLecture" Source="../../images/Clouds-pointer.mp4" LoadedBehavior="Manual" Stretch="Fill" Opacity="1.0"></MediaElement>
                     </VisualBrush.Visual>
                 </VisualBrush> 
                 <!--<ImageBrush Stretch="Fill" ImageSource="TaskImage.jpg"></ImageBrush>-->
@@ -22,10 +22,10 @@
         </Rectangle>
         <!--<TextBlock Name="test" Canvas.Left="0" Canvas.Top="0" Text="TEST" Width="100" Height="20" Visibility="Hidden"></TextBlock>-->
         
-        <Slider Name="PlaybackSlider" Canvas.Right="10" Canvas.Bottom="0" Panel.ZIndex="1000" Minimum="0" Maximum="100"
+        <Slider Visibility="Visible" Name="PlaybackSlider" Canvas.Right="10" Canvas.Bottom="0" Panel.ZIndex="1000" Minimum="0" Maximum="100"
                 TickFrequency="5" IsSnapToTickEnabled="True" ValueChanged="PlaybackSlider_ValueChanged"
                 Width="250" Height="20" TickPlacement="BottomRight" Foreground="Blue" Margin="10"/>
-        <Button Name="AnimatePlay" Canvas.Right="315" Canvas.Bottom="5" Panel.ZIndex="1000" Width="30" Height="30" Click="Animate_Click">
+        <Button Visibility="Visible" Name="AnimatePlay" Canvas.Right="315" Canvas.Bottom="5" Panel.ZIndex="1000" Width="30" Height="30" Click="Animate_Click">
             <Button.Template>
                 <ControlTemplate>
                     <Rectangle Width="30" Height="30">
@@ -47,7 +47,7 @@
                 </ControlTemplate>
             </Button.Template>
         </Button>
-        <Button Name="Clear_Animate" Canvas.Right="280" Canvas.Bottom="5" Panel.ZIndex="1000" Width="30" Height="30" Click="Clear_Animate_Click">
+        <Button Visibility="Visible" Name="Clear_Animate" Canvas.Right="280" Canvas.Bottom="5" Panel.ZIndex="1000" Width="30" Height="30" Click="Clear_Animate_Click">
             <Button.Template>
                 <ControlTemplate>
                     <Rectangle Width="25" Height="25">

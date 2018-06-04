@@ -82,29 +82,31 @@ namespace scrollbarvis
             SolidColorBrush handle = new SolidColorBrush(Colors.Gray);
 
             #region 
-            //List<byte[,]> colors = new List<byte[,]>(3);
-            //colors.Add(new byte[,] { { 255, 0, 0 } });
-            //colors.Add(new byte[,] { { 0, 255, 0 } });
-            //colors.Add(new byte[,] { { 0, 0, 255 } });
+            /*
+            List<byte[,]> colors = new List<byte[,]>(3);
+            colors.Add(new byte[,] { { 255, 0, 0 } });
+            colors.Add(new byte[,] { { 0, 255, 0 } });
+            colors.Add(new byte[,] { { 0, 0, 255 } });
 
-            //List<byte[]> colors = new List<byte[]>(3);
-            //colors.Add(new byte[] { 255, 0, 0 });
-            //colors.Add(new byte[] { 0, 255, 0 });
-            //colors.Add(new byte[] { 0, 0, 255 });
+            List<byte[]> colors = new List<byte[]>(3);
+            colors.Add(new byte[] { 255, 0, 0 });
+            colors.Add(new byte[] { 0, 255, 0 });
+            colors.Add(new byte[] { 0, 0, 255 });
 
-            //ImageBrush[] verticalheatmaps = new ImageBrush[inputFile.Length];
-            //List<double> freqs = new List<double>(inputFile.Length);
-            //for(int c = 0; c < inputFile.Length; c++) {
-            //    Tuple<int, WriteableBitmap> vert = createVerticalHeatmap(200, 2 * (int)screenheight, yCoords[c], numCoords[c], 4330, 2 * 13, colors[c], 55);
-            //    //Tuple<int, WriteableBitmap> vert = createMultiHeatmap(200, 2 * (int)screenheight, yCoords, numCoords, 4330, 2 * 13, colors, 55);
-            //    verticalheatmaps[c] = new ImageBrush(vert.Item2);
-            //    freqs.Add(vert.Item1);
-            //}
+            ImageBrush[] verticalheatmaps = new ImageBrush[inputFile.Length];
+            List<double> freqs = new List<double>(inputFile.Length);
+            for(int c = 0; c < inputFile.Length; c++) {
+                Tuple<int, WriteableBitmap> vert = createVerticalHeatmap(200, 2 * (int)screenheight, yCoords[c], numCoords[c], 4330, 2 * 13, colors[c], 55);
+                //Tuple<int, WriteableBitmap> vert = createMultiHeatmap(200, 2 * (int)screenheight, yCoords, numCoords, 4330, 2 * 13, colors, 55);
+                verticalheatmaps[c] = new ImageBrush(vert.Item2);
+                freqs.Add(vert.Item1);
+            }
 
-            //double maxfreq = freqs.Max();
-            //for (int c = 0; c < inputFile.Length; c++) {
-            //    freqs[c] = freqs[c] / maxfreq;
-            //}
+            double maxfreq = freqs.Max();
+            for (int c = 0; c < inputFile.Length; c++) {
+                freqs[c] = freqs[c] / maxfreq;
+            }
+            */
             #endregion
 
             scrollbar = new Scrollbar(15, screenheight, screenwidth, bg, blankbg, handle, canv, 1);
