@@ -42,9 +42,20 @@ namespace scrollbarvis
 
         String recordingpath = "gazerecordings/r";
 
-        String[] inputFile = { "gazerecordings/r1_0_test.csv",
-                               "gazerecordings/r0_1.csv",
-                               "gazerecordings/r0_2.csv",
+        String[] inputFile = { "gazerecordings/ComputerA/A_r5_1_test.csv",
+                               "gazerecordings/ComputerA/A_r6_1_test.csv",
+                               "gazerecordings/ComputerA/A_r7_1_test.csv",
+                               "gazerecordings/ComputerA/A_r8_1_test.csv",/*
+                               "gazerecordings/ComputerA/A_r9_1_test.csv",
+                               "gazerecordings/ComputerB/B_r6_0_test.csv",
+                               "gazerecordings/ComputerB/B_r7_1_test.csv",
+                               "gazerecordings/ComputerB/B_r8_1_test.csv",
+                               "gazerecordings/ComputerB/B_r9_1_test.csv",
+                               "gazerecordings/ComputerB/B_r10_0_test.csv",
+                               "gazerecordings/ComputerB/B_r11_1_test.csv",
+                               "gazerecordings/ComputerB/B_r12_1_test.csv",
+                               "gazerecordings/ComputerC/C_r4_0_test.txt",
+                               "gazerecordings/ComputerC/C_r5_0_test.txt",*/
                              };
 
         public Window1()
