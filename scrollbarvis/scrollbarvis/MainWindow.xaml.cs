@@ -58,6 +58,7 @@ namespace scrollbarvis
                                "gazerecordings/ComputerC/C_r4_0.csv",
                                "gazerecordings/ComputerC/C_r5_0.csv",
                              };
+        int[] inputScore = { 5, 5, 3, 2, 1, 3, 5, 1, 5, 4, 5, 3, 5, 5 };
 
         /* playback */
         System.Windows.Threading.DispatcherTimer animateTimer;
@@ -75,7 +76,6 @@ namespace scrollbarvis
             yCoords = new List<int>[inputFile.Length];
             numCoords = new int[inputFile.Length];
             List<int>[] points;
-            byte[,,] px;
             pixels3d = new List<byte[,,]>(inputFile.Length);
             for (int c = 0; c < inputFile.Length; c++)
            {
@@ -92,7 +92,7 @@ namespace scrollbarvis
             SolidColorBrush blankbg = new SolidColorBrush(Colors.LightGray);
             SolidColorBrush handle = new SolidColorBrush(Colors.Gray);
 
-            #region 
+            #region vertical scrollbar heatmap (not used)
             /*
             List<byte[,]> colors = new List<byte[,]>(3);
             colors.Add(new byte[,] { { 255, 0, 0 } });
@@ -123,9 +123,13 @@ namespace scrollbarvis
             scrollbar = new Scrollbar(15, screenheight, screenwidth, bg, blankbg, handle, canv, 1);
             recorder = new Recorder(20, 5, 100, canv, recordingpath, cloudLecture);
 
-            Color[] colors = { Colors.Red, Colors.DarkOrange, Colors.Gold, Colors.Green, Colors.Teal,
+            /* Colors for gaze display for each student in inputFile array */
+            Color[] colors = /*{ Colors.Red, Colors.DarkOrange, Colors.Gold, Colors.Green, Colors.Teal,
                                Colors.Blue, Colors.MediumAquamarine, Colors.Indigo, Colors.MediumPurple, Colors.Coral,
-                               Colors.DeepPink, Colors.Chocolate, Colors.DarkOliveGreen, Colors.Magenta, Colors.YellowGreen};
+                               Colors.DeepPink, Colors.Chocolate, Colors.DarkOliveGreen, Colors.Magenta, Colors.YellowGreen};*/
+                             { Colors.Green, Colors.Green, Colors.Red, Colors.Red, Colors.Red,
+                               Colors.Red, Colors.Green, Colors.Red, Colors.Green,
+                               Colors.Red, Colors.Green, Colors.Red, Colors.Green, Colors.Green };
 
             pointvis = new Pointvis(inputFile.Length, 35, colors, canv);
             meanvis = new Meanvis(inputFile.Length, 20, canv);
@@ -135,6 +139,7 @@ namespace scrollbarvis
             var gazeData = eyeXHost.CreateGazePointDataStream(GazePointDataMode.LightlyFiltered);
             gazeData.Next += newGazePoint;
 
+            /* Set up and start timer for recording gaze every 10 milliseconds */
             dispatcherTimer = new System.Windows.Threading.DispatcherTimer(System.Windows.Threading.DispatcherPriority.Render);
             dispatcherTimer.Tick += new EventHandler(update);
             dispatcherTimer.Interval = new TimeSpan(0, 0, 0, 0, 10);
@@ -147,6 +152,9 @@ namespace scrollbarvis
             track.Y = e.Y;
         }
 
+        /*
+         * update: Method called by dispatcherTimer to record each gaze coordinate
+         */
         private void update(object sender, EventArgs e)
         {
             Point currentgaze = PointFromScreen(track);
@@ -162,6 +170,9 @@ namespace scrollbarvis
             recorder.save();
         }
 
+        /*
+         * Scrollbar: class containing scroll methods for when background is scrollable (N/A for cloud lecture video)
+         */
         public class Scrollbar
         {
             private Rectangle handle, blankbg, hover, bg;
@@ -224,7 +235,6 @@ namespace scrollbarvis
                 */
                 #endregion
             }
-
             private void mousedown(object sender, MouseButtonEventArgs e)
             {
                 Panel.SetZIndex(hover, topz);
@@ -256,6 +266,10 @@ namespace scrollbarvis
             }
         }
 
+        /*
+         * Recorder: class for recording gaze coordinates when Tobii eye tracker is connected. Record button on upper right. 
+         * Outputs to scrollbarviz/bin/Debug/gazerecordings
+         */
         public class Recorder
         {
             private StringBuilder csv;
@@ -337,6 +351,9 @@ namespace scrollbarvis
             }
         }
 
+        /*
+         * Meanvis: class for visualization of black dot at average of all gaze points
+         */
         public class Meanvis {
             private Ellipse meandot;
             private double radius;
@@ -385,6 +402,9 @@ namespace scrollbarvis
             }
         }
 
+        /*
+         * Pointvis: class for visualization of each person's gaze
+         */
         public class Pointvis {
             private Ellipse[] ellipses;
             private double radius;

@@ -15,6 +15,26 @@
             </Rectangle.Fill>
         </Rectangle>
         <Image Name="heatmap" Width="1501" Height="750" Visibility="Hidden"></Image>
+        <Grid Panel.ZIndex="1100" Margin="10" Canvas.Left="0" Canvas.Top="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="450" />
+                <ColumnDefinition Width="450" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="180" />
+                <RowDefinition Height="180" />
+                <RowDefinition Height="180" />
+                <RowDefinition Height="180" />
+            </Grid.RowDefinitions>
+            <Border Grid.Row="0" Grid.Column="0" BorderBrush="RoyalBlue" BorderThickness="2"/>
+            <Border Grid.Row="1" Grid.Column="0" BorderBrush="RoyalBlue" BorderThickness="2"/>
+            <Border Grid.Row="2" Grid.Column="0" BorderBrush="RoyalBlue" BorderThickness="2"/>
+            <Border Grid.Row="3" Grid.Column="0" BorderBrush="RoyalBlue" BorderThickness="2"/>
+            <Border Grid.Row="0" Grid.Column="1" BorderBrush="RoyalBlue" BorderThickness="2"/>
+            <Border Grid.Row="1" Grid.Column="1" BorderBrush="RoyalBlue" BorderThickness="2"/>
+            <Border Grid.Row="2" Grid.Column="1" BorderBrush="RoyalBlue" BorderThickness="2"/>
+            <Border Grid.Row="3" Grid.Column="1" BorderBrush="RoyalBlue" BorderThickness="2"/>
+        </Grid>
         <Grid Panel.ZIndex="1100" Margin="10" Canvas.Right="200" Canvas.Top="10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="200" />

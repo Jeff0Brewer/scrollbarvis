@@ -45,8 +45,8 @@ namespace scrollbarvis
         String[] inputFile = { "gazerecordings/ComputerA/A_r5_1_test.csv",
                                "gazerecordings/ComputerA/A_r6_1_test.csv",
                                "gazerecordings/ComputerA/A_r7_1_test.csv",
-                               "gazerecordings/ComputerA/A_r8_1_test.csv",/*
-                               "gazerecordings/ComputerA/A_r9_1_test.csv",
+                               "gazerecordings/ComputerA/A_r8_1_test.csv",
+                               "gazerecordings/ComputerA/A_r9_1_test.csv",/*
                                "gazerecordings/ComputerB/B_r6_0_test.csv",
                                "gazerecordings/ComputerB/B_r7_1_test.csv",
                                "gazerecordings/ComputerB/B_r8_1_test.csv",
@@ -57,6 +57,7 @@ namespace scrollbarvis
                                "gazerecordings/ComputerC/C_r4_0_test.txt",
                                "gazerecordings/ComputerC/C_r5_0_test.txt",*/
                              };
+        int[] inputScore = { 5,5,3,2,1, 3,5,1,5,4,5,3, 5,5 };
 
         public Window1()
         {
@@ -91,7 +92,7 @@ namespace scrollbarvis
             SolidColorBrush blankbg = new SolidColorBrush(Colors.LightGray);
             SolidColorBrush handle = new SolidColorBrush(Colors.Gray);
 
-            #region 
+            #region vertical heatmap setup (N/A)
             List<byte[,]> colors = new List<byte[,]>(3);
             colors.Add(new byte[,] { { 0, 0, 255 } });
             colors.Add(new byte[,] { { 255, 0, 0 } });
@@ -120,19 +121,18 @@ namespace scrollbarvis
             #endregion
 
             scrollbar = new Scrollbar(15, 150, screenheight, screenwidth, 0.9, 100, bg, blankbg, handle, verticalheatmaps, freqs, canv, 1, wb, heatmap, pixels3d, allColors);
-
             recorder = new Recorder(20, 5, 100, canv, recordingpath);
 
             eyeXHost = new EyeXHost();
             eyeXHost.Start();
             var gazeData = eyeXHost.CreateGazePointDataStream(GazePointDataMode.LightlyFiltered);
             gazeData.Next += newGazePoint;
-
+           
+            /* Set up and start timer for recording gaze every 10 milliseconds */
             dispatcherTimer = new System.Windows.Threading.DispatcherTimer(System.Windows.Threading.DispatcherPriority.Render);
             dispatcherTimer.Tick += new EventHandler(update);
             dispatcherTimer.Interval = new TimeSpan(0, 0, 0, 0, 10);
             dispatcherTimer.Start();
-
         }
 
         private void newGazePoint(object s, EyeXFramework.GazePointEventArgs e)
@@ -141,6 +141,9 @@ namespace scrollbarvis
             track.Y = e.Y;
         }
 
+        /*
+         * update: Method called by dispatcherTimer to record each gaze coordinate
+         */
         private void update(object sender, EventArgs e)
         {
             Point currentgaze = PointFromScreen(track);
@@ -155,7 +158,11 @@ namespace scrollbarvis
             eyeXHost.Dispose();
             recorder.save();
         }
-
+        
+        /*
+         * Recorder: class for recording gaze coordinates when Tobii eye tracker is connected. Record button on upper right. 
+         * Outputs to scrollbarviz/bin/Debug/gazerecordings
+         */
         public class Recorder
         {
             private StringBuilder csv;
@@ -238,7 +245,9 @@ namespace scrollbarvis
             }
         }
 
-        #region
+        /*
+         * Scrollbar: class containing scroll methods for when background is scrollable (N/A for cloud lecture video)
+         */
         public class Scrollbar
         {
             private Rectangle handle, blankbg, picturebg, hover, bg;
@@ -481,7 +490,6 @@ namespace scrollbarvis
                 }
                 Panel.SetZIndex(hover, z);
             }
-
             private void mousescroll(object sender, MouseWheelEventArgs e)
             {
                 double handley = Canvas.GetTop(handle) - e.Delta / (.001 * bg.Height);
@@ -553,9 +561,8 @@ namespace scrollbarvis
                 heatmap.Source = wb;
             }
         }
-        #endregion
 
-        #region
+        #region vertical heatmap methods (N/A)
         public Tuple<int, WriteableBitmap> createVerticalHeatmap(int width, int height, List<int> yCoords, int numCoords, double maxY, int spread, byte[,] colors, int minalpha)
         {
             int[] frequencies = new int[height];
@@ -746,6 +753,7 @@ namespace scrollbarvis
             double distanceFromCenter, currA, a;
             int maxDistance = 80;
             double maxOpacity = 220;
+            Color currColor = allColors[index];
 
             wb = new WriteableBitmap(totalWidth, totalHeight, 96, 96, PixelFormats.Bgra32, null);
             byte[,,] pixels = new byte[totalWidth, totalHeight, 4];
@@ -762,10 +770,9 @@ namespace scrollbarvis
                         if (distanceFromCenter <= (double)maxDistance)
                         {
                             currA = pixels[j, k, 3];
-                            a = currA + (1 - currA / maxOpacity) * 90 * Math.Pow(0.965, distanceFromCenter); // EXPONENTIAL DECAY
+                            a = currA + (1 - currA / maxOpacity) * 90 * Math.Pow(0.94, distanceFromCenter); // EXPONENTIAL DECAY
                             a = (a > maxOpacity ? maxOpacity : a);
 
-                            Color currColor = allColors[index];
                             pixels[j, k, 0] = currColor.B;
                             pixels[j, k, 1] = currColor.G;
                             pixels[j, k, 2] = currColor.R;
