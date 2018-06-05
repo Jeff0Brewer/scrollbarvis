@@ -1,10 +1,10 @@
-# scrollbarvis
+# Multi-Student Visualization Lecture Task (up to 15)
 
-Gaze recording and vizualization for video lecture task with pre/post-test for cloud identification.
+Gaze recording and visualization for video lecture task with pre/post-test for cloud identification, supporting up to 15 students.
 
-*MainWindow*: Video lecture (~10 min). Bubble vizualization for each student.
+*MainWindow*: Video lecture (~10 min). Bubble visualization for each student.
 
-*Window1*: Pre/post-test. Heatmap vizualization for each student.
+*Window1*: Pre/post-test. Heatmap visualization for each student.
 
 ### Notes
 - *inputFile* array holds gaze coordinate csv files to display
